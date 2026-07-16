@@ -1,2 +1,4 @@
 *.pdf
-gitPush.bat
+venv/
+.venv/
+__pycache__/

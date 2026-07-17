@@ -5,7 +5,7 @@ import random
 
 # remove all of streamlit's bloat
 st.set_page_config(
-    page_title="ZRA Labs: Railway Object Detection",
+    page_title="ZRA Labs Summer Project",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
@@ -29,7 +29,7 @@ except FileNotFoundError:
     pass
 
 st.title("ZRA Labs: Railway Object Detection")
-st.write("Upload an image to identify railway assets")
+st.markdown("Upload an image to identify railway assets <br><br><br>", unsafe_allow_html=True)
 
 uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 

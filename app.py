@@ -1,5 +1,6 @@
 import streamlit as st
 from PIL import Image
+from labeller import *
 import time
 import random
 
@@ -51,9 +52,12 @@ st.markdown("Upload an image to identify railway assets <br><br><br>", unsafe_al
 
 uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
+
+# XXX: THIS BLOCK CONTAINS 'DUMMY' CODE AS OF NOW, LINK YOLO OR ANOTHER MODEL 
 if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_container_width=True)
+    image = Image.open(uploaded_file) # NOTE: this is the image, no need to reassign it to another var
+
+    st.image(image, caption="Target Image", use_container_width=True)
     
     # image analysis here
     with st.spinner("Processing ..."):

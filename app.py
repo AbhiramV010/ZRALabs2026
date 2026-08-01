@@ -18,7 +18,7 @@ CLASSES = {
 
 # the look of the app lives in .streamlit/config.toml, not in here
 st.set_page_config(
-    page_title="ZRA Labs | Railway detection",
+    page_title="ZRA Railway Detection",
     page_icon=":material/radar:",
     layout="centered",
     initial_sidebar_state="collapsed"
@@ -50,8 +50,8 @@ def render_header():
     st.title("Railway object detection")
 
     st.caption(
-        "Upload a trackside photo and the model marks up the railway "
-        "assets it recognises, with a confidence score for each one."
+        "Upload a railway-related photo, and the model marks up the "
+        "assets it recognises, with a confidence score for each."
     )
 
 
@@ -163,7 +163,7 @@ st.space("medium")
 uploaded_file = st.file_uploader(
     "Upload an image",
     type=["jpg", "jpeg", "png"],
-    help="JPG or PNG. Landscape trackside shots work best."
+    help="JPG/JPEG/PNG"
 )
 
 if uploaded_file is None:

@@ -1,42 +1,12 @@
 import streamlit as st
 from PIL import Image
 from labeller import *
+from result import DetectionResult
 import numpy as np
 from ultralytics import YOLO
 
 
-class DetectionResult:
-    COLOR_MAP = {
-        "train": "#FF0000",
-        "track": "#00FF00",
-        "signal": "#FFFF00",
-        "platform": "#00FFFF",
-        "overhead wire": "#FF00FF",
-        "crossing gate": "#FFA500",
-   }
-
-    def __init__(
-        self,
-        label="",
-        description="",
-        confidence=0.0,
-        rect_1=(0, 0),
-        rect_2=(0, 0)
-    ):
-        self.label = label
-        self.description = description
-        self.confidence = confidence
-        self.rect_1 = rect_1
-        self.rect_2 = rect_2
-
-    def get_color(self):
-        return self.COLOR_MAP.get(
-            self.label.lower(),
-            "#FF00FF"
-        )
-
-
-# TODO: remove test class, this is only for frontend mockup
+# TODO: remove test classes, these are only for the frontend mockup
 CLASSES = {
     "Train": "Rail vehicles, use tracks for movement",
     "Track": "The steel rails and sleepers that guide and support trains.",
@@ -46,6 +16,14 @@ CLASSES = {
     "Crossing Gate": "A safety barrier that blocks road & foot traffic when a train is passing.",
 }
 
+# the look of the app lives in .streamlit/config.toml, not in here
+st.set_page_config(
+    page_title="ZRA Labs | Railway detection",
+    page_icon=":material/radar:",
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
+
 
 @st.cache_resource
 def get_model():
@@ -54,118 +32,172 @@ def get_model():
 
 model = get_model()
 
-# remove all of streamlit's bloat
-st.set_page_config(
-    page_title="ZRA Labs Summer Project",
-    layout="centered",
-    initial_sidebar_state="collapsed"
-)
-
-hide_streamlit_style = """
-<style>
-#MainMenu {visibility: hidden;}
-header {visibility: hidden;}
-footer {visibility: hidden;}
-</style>
-"""
-
-st.markdown(
-    hide_streamlit_style,
-    unsafe_allow_html=True
-)
-
-# apply style.css file
+# style.css only holds what the theme can't express (image shadow etc.)
 try:
     with open("style.css") as f:
-        st.markdown(
-            f"<style>{f.read()}</style>",
-            unsafe_allow_html=True
-        )
+        st.html(f"<style>{f.read()}</style>")
 except FileNotFoundError:
     pass
 
-st.title("ZRA Labs: Railway Object Detection")
 
-st.markdown(
-    "Upload an image to identify railway assets",
-    unsafe_allow_html=True
-)
+def render_header():
+    st.badge(
+        "Computer vision",
+        icon=":material/network_node:",
+        color="primary"
+    )
+
+    st.title("Railway object detection")
+
+    st.caption(
+        "Upload a trackside photo and the model marks up the railway "
+        "assets it recognises, with a confidence score for each one."
+    )
+
+
+def render_class_legend():
+    """Shown before an upload, so the page isn't an empty box."""
+    st.subheader("What it looks for")
+
+    for label, description in CLASSES.items():
+
+        with st.container(border=True, gap=None):
+
+            probe = DetectionResult(label=label)
+
+            st.badge(
+                label,
+                color=probe.get_badge_color()
+            )
+
+            st.caption(description)
+
+
+def render_summary(detections):
+    labels = [res.label for res in detections]
+
+    top = max(detections, key=lambda r: r.confidence)
+
+    cols = st.columns(3)
+
+    cols[0].metric(
+        "Objects found",
+        len(detections),
+        border=True
+    )
+
+    cols[1].metric(
+        "Distinct classes",
+        len(set(labels)),
+        border=True
+    )
+
+    cols[2].metric(
+        "Best match",
+        top.label,
+        delta_description=f"{top.confidence:.0%} confident",
+        border=True
+    )
+
+
+def render_detection(res):
+    with st.container(border=True):
+
+        with st.container(horizontal=True, vertical_alignment="center"):
+
+            st.badge(
+                res.label,
+                color=res.get_badge_color()
+            )
+
+            st.caption(f"{res.confidence:.1%} confidence")
+
+        st.progress(min(max(res.confidence, 0.0), 1.0))
+
+        st.caption(res.description)
+
+
+# XXX: THIS BLOCK CONTAINS 'DUMMY' CODE AS OF NOW, LINK YOLO OR ANOTHER MODEL
+def detect(image):
+    results = model.predict(
+        source=np.array(image),
+        conf=0.25
+    )
+
+    detections = []
+
+    if len(results) > 0 and len(results[0].boxes) > 0:
+
+        for box in results[0].boxes:
+
+            cls_idx = int(box.cls[0].item())
+
+            label = results[0].names[cls_idx].title()
+
+            desc = CLASSES.get(
+                label,
+                "Detected asset"
+            )
+
+            conf = float(box.conf[0].item())
+
+            x1, y1, x2, y2 = box.xyxy[0].tolist()
+
+            res = DetectionResult(
+                label=label,
+                description=desc,
+                confidence=conf,
+                rect_1=(int(x1), int(y1)),
+                rect_2=(int(x2), int(y2))
+            )
+
+            detections.append(res)
+
+    return detections
+
+
+render_header()
+
+st.space("medium")
 
 uploaded_file = st.file_uploader(
     "Upload an image",
-    type=["jpg", "jpeg", "png"]
+    type=["jpg", "jpeg", "png"],
+    help="JPG or PNG. Landscape trackside shots work best."
 )
 
-# XXX: THIS BLOCK CONTAINS 'DUMMY' CODE AS OF NOW, LINK YOLO OR ANOTHER MODEL
-if uploaded_file is not None:
+if uploaded_file is None:
+    st.space("medium")
+    render_class_legend()
 
+else:
     image = Image.open(uploaded_file)
 
-    with st.spinner("Processing ..."):
+    with st.spinner("Scanning image ...", show_time=True):
+        detections = detect(image)
 
-        results = model.predict(
-            source=np.array(image),
-            conf=0.25
+    st.space("medium")
+
+    if not detections:
+        st.warning(
+            "No railway assets recognised in this image.",
+            icon=":material/search_off:"
         )
 
-        detections = []
+    else:
+        render_summary(detections)
 
-        if len(results) > 0 and len(results[0].boxes) > 0:
+        st.space("small")
 
-            for box in results[0].boxes:
+        st.image(
+            labelImage(detections, image.copy()),
+            caption="Detected objects",
+            width="stretch"
+        )
 
-                cls_idx = int(box.cls[0].item())
+        st.space("medium")
 
-                label = results[0].names[cls_idx].title()
+        st.subheader("Detections")
 
-                desc = CLASSES.get(
-                    label,
-                    "Detected asset"
-                )
-
-                conf = float(box.conf[0].item())
-
-                x1, y1, x2, y2 = (
-                    box.xyxy[0].tolist()
-                )
-
-                res = DetectionResult(
-                    label=label,
-                    description=desc,
-                    confidence=conf,
-                    rect_1=(int(x1), int(y1)),
-                    rect_2=(int(x2), int(y2))
-                )
-
-                detections.append(res)
-
-    labelled_image = labelImage(
-        detections,
-        image.copy()
-    )
-
-    st.image(
-        labelled_image,
-        caption="Detected Objects",
-        use_container_width=True
-    )
-
-    st.success("Analysis has been completed")
-
-    for res in detections:
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.metric(
-                label="Detected Object",
-                value=res.label
-            )
-
-        with col2:
-            st.metric(
-                label="Confidence Score",
-                value=f"{res.confidence:.2%}"
-            )
-
-        st.info(f"Classification >> {res.description}")
+        for res in detections:
+            render_detection(res)

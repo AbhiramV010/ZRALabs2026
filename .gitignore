@@ -64,3 +64,7 @@ cython_debug/
 .streamlit/secrets.toml
 
 reviews/
+.claude
+images
+
+collect_images.py

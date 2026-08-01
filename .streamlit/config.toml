@@ -1,6 +1,43 @@
+# ZRA Labs — dark "control room" theme
+# Slate base with a teal signal accent. Detection classes borrow the
+# semantic palette below so the app UI and the drawn boxes match.
 [theme]
-primaryColor = "#00ffcc"          
-backgroundColor = "#000000"       
-secondaryBackgroundColor = "#1F2937"
-textColor = "#F3F4F6"             
-font = "sans serif"
+base = "dark"
+primaryColor = "#14B8A6"
+backgroundColor = "#0B1120"
+secondaryBackgroundColor = "#151E2E"
+codeBackgroundColor = "#151E2E"
+textColor = "#E2E8F0"
+linkColor = "#2DD4BF"
+borderColor = "#25324A"
+showWidgetBorder = true
+showSidebarBorder = true
+baseRadius = "10px"
+buttonRadius = "8px"
+linkUnderline = false
+
+font = "'Bitcount Prop Single':https://fonts.googleapis.com/css2?family=Bitcount+Prop+Single:wght@100..900&display=swap"
+codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+codeFontSize = "0.85rem"
+codeTextColor = "#94E2D5"
+baseFontSize = 15
+baseFontWeight = 400
+headingFontSizes = ["34px", "24px", "19px", "16px", "14px", "13px"]
+headingFontWeights = [700, 600, 600, 600, 500, 500]
+
+# Detection class colors
+redColor = "#F87171"
+orangeColor = "#FB923C"
+yellowColor = "#FACC15"
+greenColor = "#4ADE80"
+blueColor = "#60A5FA"
+violetColor = "#C084FC"
+grayColor = "#94A3B8"
+
+chartCategoricalColors = ["#14B8A6", "#60A5FA", "#C084FC", "#FB923C", "#4ADE80", "#F87171", "#FACC15"]
+
+[theme.sidebar]
+backgroundColor = "#0E1626"
+secondaryBackgroundColor = "#1B2537"
+codeBackgroundColor = "#1B2537"
+borderColor = "#25324A"

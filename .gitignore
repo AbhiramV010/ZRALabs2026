@@ -1,4 +1,5 @@
-*.pdf
+myPlan.pdf
+project.pdf
 
 # Python
 __pycache__/

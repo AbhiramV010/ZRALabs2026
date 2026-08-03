@@ -65,6 +65,5 @@ cython_debug/
 
 reviews/
 .claude
-images
+# images
 
-collect_images.py

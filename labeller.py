@@ -1,6 +1,4 @@
-# this file recieves input (as an image), with coordinates on where to draw the rectangle masks
-# it then draws them using cv2's overlay & returns the completed image to the app
-# not intended for execution, just houses some of the functions
+# draws the detection boxes onto the uploaded image
 from result import DetectionResult
 from typing import List
 from PIL import Image, ImageDraw, ImageFont
@@ -19,7 +17,7 @@ def labelImage(res: List[DetectionResult], img: Image.Image) -> Image.Image:
     img = img.convert("RGB")
     draw = ImageDraw.Draw(img)
 
-    # scale the markup with the image so it reads the same on any upload
+    # scale the markup with the image, so it reads the same on any upload
     scale = max(img.width, img.height) / 900
     stroke = max(2, round(3 * scale))
     pad = max(4, round(6 * scale))

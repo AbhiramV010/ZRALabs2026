@@ -1,5 +1,5 @@
-streamlit>=1.30.0
-tensorflow>=2.15.0
+streamlit>=1.59.0
 pillow>=10.0.0
 numpy>=1.24.0
-ultralytics>=8.4.96
+torch>=2.0.0
+torchvision>=0.15.0

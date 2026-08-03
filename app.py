@@ -1,38 +1,51 @@
 import streamlit as st
+from pathlib import Path
 from PIL import Image
 from labeller import *
 from result import DetectionResult
-import numpy as np
-from ultralytics import YOLO
+from model.predict import RailwayClassifier
 
+ASSETS = Path(__file__).resolve().parent / "assets"
 
-# TODO: remove test classes, these are only for the frontend mockup
+# the five classes the checkpoint was trained on
 CLASSES = {
     "Train": "Rail vehicles, use tracks for movement",
     "Track": "The steel rails and sleepers that guide and support trains.",
     "Signal": "Device used to control train movements and traffic flow.",
     "Platform": "The passenger boarding area, parallel to the tracks at a station.",
-    "Overhead Wire": "Lines that hang above a train, supplying electrical power.",
     "Crossing Gate": "A safety barrier that blocks road & foot traffic when a train is passing.",
 }
 
-# the look of the app lives in .streamlit/config.toml, not in here
+# a length of track, animated in style.css
+RAIL = '<div class="rail"></div>'
+RAIL_SCANNING = (
+    '<div class="rail rail-live">'
+    '<span class="lamp"></span><span class="lamp"></span>'
+    '</div>'
+)
+
 st.set_page_config(
     page_title="ZRA Railway Detection",
-    page_icon=":material/radar:",
+    page_icon=str(ASSETS / "icon-192.png"),
     layout="centered",
     initial_sidebar_state="collapsed"
+)
+
+st.logo(
+    str(ASSETS / "logo.png"),
+    size="large",
+    link="https://railwayacademy.org/",
+    icon_image=str(ASSETS / "icon-192.png")
 )
 
 
 @st.cache_resource
 def get_model():
-    return YOLO("yolov8n.pt")
+    return RailwayClassifier()
 
 
 model = get_model()
 
-# style.css only holds what the theme can't express (image shadow etc.)
 try:
     with open("style.css") as f:
         st.html(f"<style>{f.read()}</style>")
@@ -41,27 +54,30 @@ except FileNotFoundError:
 
 
 def render_header():
-    st.badge(
-        "Computer vision",
-        icon=":material/network_node:",
-        color="primary"
-    )
+    with st.container(key="app-header"):
 
-    st.title("Railway object detection")
+        st.badge(
+            "Computer vision",
+            icon=":material/network_node:",
+            color="primary"
+        )
 
-    st.caption(
-        "Upload a railway-related photo, and the model marks up the "
-        "assets it recognises, with a confidence score for each."
-    )
+        st.title("Railway Object Detection")
+
+        st.caption(
+            "Upload a railway-related photo, and the model marks up the "
+            "assets it recognises, with a confidence score for each."
+        )
+
+    st.html(RAIL)
 
 
 def render_class_legend():
-    """Shown before an upload, so the page isn't an empty box."""
     st.subheader("What it looks for")
 
-    for label, description in CLASSES.items():
+    for index, (label, description) in enumerate(CLASSES.items()):
 
-        with st.container(border=True, gap=None):
+        with st.container(border=True, gap=None, key=f"legend-{index}"):
 
             probe = DetectionResult(label=label)
 
@@ -73,35 +89,51 @@ def render_class_legend():
             st.caption(description)
 
 
+# st.metric truncates long values, these cards don't
+def render_card(index, label, value, note=None):
+    with st.container(border=True, height="stretch", key=f"summary-{index}"):
+
+        st.caption(label)
+
+        st.header(value, anchor=False)
+
+        st.caption(note or "")
+
+
 def render_summary(detections):
-    labels = [res.label for res in detections]
+    top = detections[0]
 
-    top = max(detections, key=lambda r: r.confidence)
+    labels = {res.label for res in detections}
 
-    cols = st.columns(3)
+    cols = st.columns(3, gap="small")
 
-    cols[0].metric(
-        "Objects found",
-        len(detections),
-        border=True
-    )
+    with cols[0]:
+        render_card(
+            0,
+            "Objects found",
+            str(len(detections)),
+            "across the frame"
+        )
 
-    cols[1].metric(
-        "Distinct classes",
-        len(set(labels)),
-        border=True
-    )
+    with cols[1]:
+        render_card(
+            1,
+            "Distinct classes",
+            str(len(labels)),
+            "of 5 the model knows"
+        )
 
-    cols[2].metric(
-        "Best match",
-        top.label,
-        delta_description=f"{top.confidence:.0%} confident",
-        border=True
-    )
+    with cols[2]:
+        render_card(
+            2,
+            "Best match",
+            top.label,
+            f"{top.confidence:.0%} confident"
+        )
 
 
-def render_detection(res):
-    with st.container(border=True):
+def render_detection(res, key=None):
+    with st.container(border=True, key=key):
 
         with st.container(horizontal=True, vertical_alignment="center"):
 
@@ -117,43 +149,39 @@ def render_detection(res):
         st.caption(res.description)
 
 
-# XXX: THIS BLOCK CONTAINS 'DUMMY' CODE AS OF NOW, LINK YOLO OR ANOTHER MODEL
+def describe(label):
+    return CLASSES.get(label, "Railway asset")
+
+
 def detect(image):
-    results = model.predict(
-        source=np.array(image),
-        conf=0.25
-    )
+    """Everything the model finds in the frame, strongest first."""
+    results = []
 
-    detections = []
+    for label, confidence, (x1, y1, x2, y2) in model.detect(image):
 
-    if len(results) > 0 and len(results[0].boxes) > 0:
+        res = DetectionResult(
+            label=label,
+            description=describe(label),
+            confidence=confidence,
+            rect_1=(x1, y1),
+            rect_2=(x2, y2)
+        )
 
-        for box in results[0].boxes:
+        results.append(res)
 
-            cls_idx = int(box.cls[0].item())
+    return results
 
-            label = results[0].names[cls_idx].title()
 
-            desc = CLASSES.get(
-                label,
-                "Detected asset"
-            )
-
-            conf = float(box.conf[0].item())
-
-            x1, y1, x2, y2 = box.xyxy[0].tolist()
-
-            res = DetectionResult(
-                label=label,
-                description=desc,
-                confidence=conf,
-                rect_1=(int(x1), int(y1)),
-                rect_2=(int(x2), int(y2))
-            )
-
-            detections.append(res)
-
-    return detections
+def classify(image):
+    """The whole-frame verdict, one entry per class, best first."""
+    return [
+        DetectionResult(
+            label=label,
+            description=describe(label),
+            confidence=confidence
+        )
+        for label, confidence in model.classify(image)
+    ]
 
 
 render_header()
@@ -173,14 +201,22 @@ if uploaded_file is None:
 else:
     image = Image.open(uploaded_file)
 
+    # the running signal light is cleared once the scan finishes
+    scanner = st.empty()
+    scanner.html(RAIL_SCANNING)
+
     with st.spinner("Scanning image ...", show_time=True):
         detections = detect(image)
+        ranked = classify(image)
+
+    scanner.empty()
 
     st.space("medium")
 
     if not detections:
         st.warning(
-            "No railway assets recognised in this image.",
+            "No railway assets recognised in this frame. The whole-frame "
+            "ranking below is shown anyway.",
             icon=":material/search_off:"
         )
 
@@ -199,5 +235,12 @@ else:
 
         st.subheader("Detections")
 
-        for res in detections:
-            render_detection(res)
+        for index, res in enumerate(detections):
+            render_detection(res, key=f"detection-{index}")
+
+    st.space("medium")
+
+    with st.expander("Whole-frame class confidence"):
+
+        for index, res in enumerate(ranked):
+            render_detection(res, key=f"ranked-{index}")

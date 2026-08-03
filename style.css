@@ -1,18 +1,194 @@
-/* Only the few touches the theme in .streamlit/config.toml can't express.
-   Colors, fonts and radii all live in config.toml — keep them out of here. */
+/* Only what the theme in .streamlit/config.toml can't express. */
 
-/* Rounded, lifted result image */
+/* st.logo's "large" is still small for a square logo */
+[data-testid="stLogo"],
+[data-testid="stSidebarLogo"] {
+    height: 4rem !important;
+    max-height: none;
+    width: auto;
+}
+
+[data-testid="stHeader"] {
+    height: 5.5rem;
+}
+
+/* 1.25x the stock 736px, matching the base font size */
+[data-testid="stMainBlockContainer"] {
+    max-width: 920px;
+    padding-top: 6.5rem;
+}
+
+[data-testid="stHorizontalBlock"] [data-testid="stVerticalBlockBorderWrapper"] > div {
+    padding: 0.35rem 0.5rem;
+}
+
+/* ---- Motion ---- */
+
+/* rails and sleepers, drawn in on load */
+.rail {
+    height: 10px;
+    margin: 0.25rem 0;
+    border-top: 2px solid #25324A;
+    border-bottom: 2px solid #25324A;
+    background-image: repeating-linear-gradient(
+        90deg, #25324A 0 2px, transparent 2px 14px
+    );
+    transform-origin: left;
+    animation: rail-lay 600ms ease-out;
+}
+
+@keyframes rail-lay {
+    from {
+        transform: scaleX(0);
+        opacity: 0;
+    }
+}
+
+/* a signal light running the track while the model works */
+.rail-live {
+    position: relative;
+    overflow: hidden;
+}
+
+.rail-live::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 20%;
+    background: linear-gradient(90deg, transparent, #14B8A6, transparent);
+    animation: rail-run 1.1s linear infinite;
+}
+
+@keyframes rail-run {
+    from { transform: translateX(-120%); }
+    to { transform: translateX(560%); }
+}
+
+/* level crossing lamps, alternating while the scan runs */
+.lamp {
+    position: absolute;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    margin-top: -3px;
+    border-radius: 50%;
+    background: #F87171;
+    animation: lamp-blink 900ms steps(1, end) infinite;
+}
+
+.lamp:first-child {
+    left: 3px;
+}
+
+.lamp:last-child {
+    right: 3px;
+    animation-delay: 450ms;
+}
+
+@keyframes lamp-blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0.15; }
+}
+
+/* cards and rows pull in from the left, staggered like carriages */
+.st-key-app-header,
+[class*="st-key-summary-"],
+[class*="st-key-detection-"],
+[class*="st-key-ranked-"],
+[class*="st-key-legend-"] {
+    animation: rail-enter 420ms ease-out backwards;
+}
+
+@keyframes rail-enter {
+    from {
+        opacity: 0;
+        transform: translateX(-14px);
+    }
+}
+
+.st-key-summary-1,
+.st-key-detection-1,
+.st-key-ranked-1,
+.st-key-legend-1 {
+    animation-delay: 70ms;
+}
+
+.st-key-summary-2,
+.st-key-detection-2,
+.st-key-ranked-2,
+.st-key-legend-2 {
+    animation-delay: 140ms;
+}
+
+.st-key-ranked-3,
+.st-key-legend-3 {
+    animation-delay: 210ms;
+}
+
+.st-key-ranked-4,
+.st-key-legend-4 {
+    animation-delay: 280ms;
+}
+
+/* summary cards lift under the pointer */
+[class*="st-key-summary-"] {
+    transition: transform 160ms ease-out;
+}
+
+[class*="st-key-summary-"]:hover {
+    transform: translateY(-3px);
+}
+
+.stImage {
+    animation: rail-arrive 420ms ease-out;
+}
+
+@keyframes rail-arrive {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+}
+
+/* confidence bars fill from the left */
+[data-testid="stProgressBarTrack"] > div {
+    transform-origin: left;
+    animation: rail-fill 700ms ease-out;
+}
+
+@keyframes rail-fill {
+    from { transform: scaleX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rail,
+    .rail-live::after,
+    .lamp,
+    .stImage,
+    .st-key-app-header,
+    [class*="st-key-summary-"],
+    [class*="st-key-detection-"],
+    [class*="st-key-ranked-"],
+    [class*="st-key-legend-"],
+    [data-testid="stProgressBarTrack"] > div {
+        animation: none;
+    }
+
+    [class*="st-key-summary-"]:hover {
+        transform: none;
+    }
+}
+
 .stImage > img {
     border-radius: 14px;
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
 }
 
-/* No fullscreen button on the result image — the markup is the point, not a lightbox */
+/* no lightbox button over the marked-up image */
 [data-testid="stFullScreenFrame"]:has([data-testid="stImage"]) [data-testid="stElementToolbar"] {
     display: none;
 }
 
-/* Drop the file uploader's dashed-box look down to something quieter */
 [data-testid="stFileUploaderDropzone"] {
     background: transparent;
 }

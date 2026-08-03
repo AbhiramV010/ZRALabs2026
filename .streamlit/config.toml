@@ -1,6 +1,5 @@
-# ZRA Labs — dark "control room" theme
-# Slate base with a teal signal accent. Detection classes borrow the
-# semantic palette below so the app UI and the drawn boxes match.
+# ZRA Labs dark theme, slate base with a teal accent.
+# The drawn boxes reuse the semantic colors below.
 [theme]
 base = "dark"
 primaryColor = "#14B8A6"
@@ -20,9 +19,10 @@ font = "'Bitcount Prop Single':https://fonts.googleapis.com/css2?family=Bitcount
 codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
 codeFontSize = "0.85rem"
 codeTextColor = "#94E2D5"
-baseFontSize = 15
+# scaled 1.25x, style.css widens the content column to match
+baseFontSize = 19
 baseFontWeight = 400
-headingFontSizes = ["34px", "24px", "19px", "16px", "14px", "13px"]
+headingFontSizes = ["43px", "30px", "24px", "20px", "18px", "16px"]
 headingFontWeights = [700, 600, 600, 600, 500, 500]
 
 # Detection class colors

@@ -1,5 +1,5 @@
 class DetectionResult:
-    # box colors, matched to the semantic palette in .streamlit/config.toml
+    # box colors, matched to the palette in .streamlit/config.toml
     COLOR_MAP = {
         "train": "#F87171",
         "track": "#60A5FA",
@@ -10,7 +10,7 @@ class DetectionResult:
         "test class": "#94A3B8"
     }
 
-    # the same classes as streamlit badge color names, used in the results list
+    # the same classes as streamlit badge color names
     BADGE_MAP = {
         "train": "red",
         "track": "blue",

@@ -226,12 +226,21 @@ def main():
 
     save_checkpoint(model, classes, args.output, metrics)
 
-    HISTORY_PATH.write_text(
+    # a run sent elsewhere by --output keeps its history with it. Writing
+    # to the one path regardless means a two-epoch trial overwrites the
+    # record of the run the saved checkpoint actually came from, and the
+    # curve and the weights then describe different models
+    history_path = (
+        HISTORY_PATH if args.output == CHECKPOINT_PATH
+        else args.output.with_name(f"{args.output.stem}_history.json")
+    )
+
+    history_path.write_text(
         json.dumps({"metrics": metrics, "history": state["history"]}, indent=2)
     )
 
     print(f"\nSaved model to {args.output}")
-    print(f"Saved history to {HISTORY_PATH}")
+    print(f"Saved history to {history_path}")
 
 
 if __name__ == "__main__":

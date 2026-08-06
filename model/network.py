@@ -81,5 +81,12 @@ def load_checkpoint(path=CHECKPOINT_PATH, device="cpu"):
     return model, classes
 
 
+def load_metrics(path=CHECKPOINT_PATH):
+    """The scores stored alongside the weights, without building a model."""
+    checkpoint = torch.load(path, map_location="cpu", weights_only=False)
+
+    return checkpoint.get("metrics", {})
+
+
 def pick_device():
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")

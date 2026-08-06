@@ -1,0 +1,174 @@
+# Images rejected during the visual audit of images/overhead_wire.
+#
+# collect_wire.py reads this file and will not download anything listed
+# here, so the audit survives a re-run. Without it the first prune was
+# undone by the next collection, which put every deleted file straight
+# back.
+#
+# The cropper decides whether a photograph has a band of wire in it at
+# all. What it cannot decide is whether that band is the right subject:
+# a montage of four catenary photos, a close-up with a white ellipse
+# drawn on it, or a street of tram wire over a shopfront all crop
+# perfectly and none of them belong in the class. Those are the entries
+# below. One filename per line, '#' starts a comment.
+
+
+# ---------------------------------------------------------------
+# Cropped cleanly, but the crop is not what the class is about
+# ---------------------------------------------------------------
+# The audit of images/overhead_wire. Each of these has a band of wire
+# in it somewhere; what the cropper cannot judge is that the band is
+# sharing the frame with something that is the real subject.
+
+# The cab roof of a red electric locomotive filling the frame. It is
+# under wire, so the crop is legitimate - but it is a picture of a
+# train, and the train class is next door.
+overhead_wire_111ed-084-884019-kb-tb.jpg
+
+# Cloud over the rooftops of Saarbruecken. The wires are there and are
+# too faint to see at any size the model is shown.
+overhead_wire_20211005-josefsbr-cke-saarbr-cken.jpg
+
+# Tram wire over a corner building in Zurich, and a building is what
+# the picture is of.
+overhead_wire_20230122-schelling-salon.jpg
+
+# The station building at Plattling, wires crossing above it.
+overhead_wire_20230211-bahnhof-plattling-01.jpg
+
+# Trees against sky. The portals the title promises are out of frame.
+overhead_wire_2026-03-21-opwaardering-maaslijn-bovenleidingsportalen-op-st.jpg
+
+# Two catenary photographs mounted side by side as one file, with a
+# hard white seam down the middle.
+overhead_wire_catenaria-svizzera-15kv-16-hz.jpg
+
+# A Moscow street: tram wire, and an apartment block taking a third of
+# the frame.
+overhead_wire_moscow-sergiya-radonezskogo-street-tram-line-2024-09-1727172.jpg
+
+# The curved canopy of the Bruges signal box, one gantry arm above it.
+overhead_wire_seinhuis-brugge-r01.jpg
+
+# Shot through a train window, with captions and arrows added over the
+# top. Reflections, not contact wire.
+overhead_wire_ventimiglia-ferrovia-dalla-francia.jpg
+overhead_wire_ventimiglia-ferrovia-vs-m-nton.jpg
+overhead_wire_ventimiglia-linea-1-5c-c-25kvc-a.jpg
+overhead_wire_staz-ventimiglia-1-5-3kv.jpg
+overhead_wire_staz-ventimiglia-tratto-1-5-3-kv.jpg
+
+# A road level crossing under wire: barriers, road signals, a warning
+# mast. Everything in it that is not wire belongs to crossing_gate.
+overhead_wire_csx-broadway-street-crossing-in-ashford.jpg
+
+
+# ---------------------------------------------------------------
+# Matched an overhead wire query, but have no wire in the frame
+# ---------------------------------------------------------------
+
+# The slot cut in a platform edge to let a catenary mast through,
+# photographed from above. The mast is there; no wire is.
+overhead_wire_cutout-in-platform-for-catenary-pole-at-stratford-station-co.jpg
+
+# A tracked excavator on a worksite under a bridge.
+overhead_wire_004-2020-10-13-schweres-geraet.jpg
+
+# A railway viaduct with a footpath through the arch.
+overhead_wire_le-viaduc-du-chemin-de-fer-orsay-qui-franchit-la-rivi-re-l-y.jpg
+
+
+# ---------------------------------------------------------------
+# Renders, product shots and annotated diagrams, not photographs
+# ---------------------------------------------------------------
+
+# An insulator assembly rendered on a flat blue background.
+overhead_wire_elektrische-oberleitung-20200507-rm-111655.jpg
+
+# Annotated instructional composites of catenary hardware.
+overhead_wire_isolatori-svizzeri-ferrovia.jpg
+overhead_wire_sospensioni-catenaria.jpg
+
+
+# ---------------------------------------------------------------
+# Overhead wire, but not railway overhead wire
+# ---------------------------------------------------------------
+
+# A trolleybus on Nevsky Avenue. Road vehicle under road wiring - the
+# app is for railway assets, and a trolleybus in the positives teaches
+# the model that a city street is a wire scene.
+overhead_wire_trolleybus-bkm-321-on-nevsky-avenue-img1.jpg
+
+
+# ---------------------------------------------------------------
+# Track layout diagrams
+# ---------------------------------------------------------------
+# Caught by the 'layout'/'alignment' terms in collect_images.REJECT now,
+# listed here because they were already on disk when that was added.
+not_overhead_wire_comparison-of-narrow-and-standard-gauge-railway-alignments-i.png
+not_overhead_wire_farina-railway-station-track-layout-narrow-and-standard-blac.jpg
+not_overhead_wire_farina-railway-station-track-layout-narrow-and-standard-colo.jpg
+not_overhead_wire_farina-railway-station-track-layout-narrow-gauge-only.jpg
+
+
+# ---------------------------------------------------------------
+# Electric traction, but no wire in the frame
+# ---------------------------------------------------------------
+
+# A preserved Class 86 standing in a works yard. It is an electric
+# locomotive, which is why it matched, but there is no catenary
+# anywhere in shot. Teaching the model that 'electric loco' means
+# 'wire' is exactly the shortcut worth avoiding.
+overhead_wire_86-259-tyseley-locomotive-works.jpg
+
+# A bronze war memorial plaque.
+overhead_wire_air-mens-memorial-st-edward-s-leek.jpg
+
+# An annotated hardware diagram on a flat background.
+overhead_wire_catenaria-svizzera-15-kv.jpg
+
+
+# ---------------------------------------------------------------
+# Second audit: positives with no overhead wire in the frame
+# ---------------------------------------------------------------
+# Every one of these matched a wire query on its title or its subject
+# being electric. None of them actually shows contact wire.
+
+# A lineside sign reading '313 UNITS PAN DOWN NO 2 LINE'. About
+# pantographs; no wire in shot.
+overhead_wire_313-units-pan-down-no-2-line.jpg
+
+# Cab interior of a gas-electric railcar - gauges and controls.
+overhead_wire_atchison-topeka-and-santa-fe-gas-electric-car-m-160-overhead.jpg
+
+# Coupling a loco to Heathrow Express units under the Paddington
+# trainshed. The stock is electric, the frame has no wire in it.
+overhead_wire_coupling-up-57603-with-heathrow-express-emus-at-london-paddi.jpg
+
+# A J15 steam locomotive at Holt on the North Norfolk Railway, which
+# is not electrified.
+overhead_wire_j15-65462-at-holt-geograph-org-uk-1387453.jpg
+
+# Tramway turning loop under construction. Masts are up, no wire is
+# strung yet.
+overhead_wire_j42-422-wendeschleife-volbedingstra-e.jpg
+
+# Street during tramway works, same case - poles but no wire.
+overhead_wire_mainz-zahlbach-untere-zahlbacher-stra-e-w-hrend-der-stra-enb.jpg
+
+# Low-resolution composite of two scans at the Otira tunnel. Whether
+# there is contact wire in it cannot be told at this size.
+overhead_wire_otira-tunnel-14788930792.jpg
+
+# A builder's roster portrait of an electric locomotive against a
+# plain background.
+overhead_wire_paulista-214.jpg
+
+# A steam locomotive under a road bridge at Preston. The station is
+# electrified; this end of the platform, in this frame, is not.
+overhead_wire_preston-station-locomotive-at-north-end-of-platform-5-by-fis.jpg
+
+# Steam locomotives in a Hungarian yard. The wires overhead are
+# lineside telegraph runs on poles, not contact wire, despite what the
+# file name claims.
+overhead_wire_steam-locomotive-hungarian-railways-railway-catenary-wire-hu.jpg

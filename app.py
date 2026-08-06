@@ -7,13 +7,15 @@ from model.predict import RailwayClassifier
 
 ASSETS = Path(__file__).resolve().parent / "assets"
 
-# the five classes the checkpoint was trained on
+# the six classes the checkpoint was trained on
 CLASSES = {
     "Train": "Rail vehicles, use tracks for movement",
     "Track": "The steel rails and sleepers that guide and support trains.",
     "Signal": "Device used to control train movements and traffic flow.",
     "Platform": "The passenger boarding area, parallel to the tracks at a station.",
     "Crossing Gate": "A safety barrier that blocks road & foot traffic when a train is passing.",
+    "Overhead Wire": "The catenary and contact wire strung above the track "
+                     "that electric trains draw current from.",
 }
 
 # a length of track, animated in style.css
@@ -120,7 +122,7 @@ def render_summary(detections):
             1,
             "Distinct classes",
             str(len(labels)),
-            "of 5 the model knows"
+            f"of {len(CLASSES)} the model knows"
         )
 
     with cols[2]:
@@ -155,32 +157,33 @@ def describe(label):
 
 def detect(image):
     """Everything the model finds in the frame, strongest first."""
-    results = []
+    found = list(model.detect(image))
 
-    for label, confidence, (x1, y1, x2, y2) in model.detect(image):
-
-        res = DetectionResult(
+    results = [
+        DetectionResult(
             label=label,
             description=describe(label),
             confidence=confidence,
             rect_1=(x1, y1),
             rect_2=(x2, y2)
         )
+        for label, confidence, (x1, y1, x2, y2) in found
+    ]
 
-        results.append(res)
-
-    return results
+    return sorted(results, key=lambda res: -res.confidence)
 
 
 def classify(image):
     """The whole-frame verdict, one entry per class, best first."""
+    ranked = list(model.classify(image))
+
     return [
         DetectionResult(
             label=label,
             description=describe(label),
             confidence=confidence
         )
-        for label, confidence in model.classify(image)
+        for label, confidence in sorted(ranked, key=lambda pair: -pair[1])
     ]
 
 

@@ -4,6 +4,7 @@
 #   python collect_images.py --count 30
 import argparse
 import csv
+import hashlib
 import html
 import json
 import re
@@ -52,11 +53,18 @@ QUERIES = {
         "island platform railway station",
         "platform edge railway station",
     ],
+    # Commons is full of digitised trade periodicals that match anything
+    # with 'electric railway' in it, so these lean on words that only
+    # turn up on modern photographs of the wires themselves. The German
+    # and French terms are here because they return photos rather than
+    # scans far more reliably than the English ones do.
     "overhead_wire": [
-        "railway overhead line equipment",
         "railway catenary wires",
-        "overhead wire electrification railway mast",
-        "pantograph overhead line railway",
+        "oberleitung eisenbahn strecke",
+        "railway overhead line masts track",
+        "catenaire ferroviaire ligne",
+        "25 kv overhead line electrification railway",
+        "electrified railway contact wire above track",
     ],
     "crossing_gate": [
         "level crossing barrier railway",
@@ -69,11 +77,85 @@ QUERIES = {
 # maps, diagrams and logos slip in, drop them by title
 REJECT = re.compile(
     r"\b(map|diagram|logo|coat of arms|plan|chart|graph|drawing|"
-    r"timetable|poster|ticket|stamp|banner|icon)\b",
+    r"timetable|poster|ticket|stamp|banner|icon|layout|alignments?)\b",
     re.IGNORECASE
 )
 
+# Commons holds a large dump of digitised trade press, and a page of
+# 1906 advertising copy matches a railway search as readily as a photo
+# does. Two signatures catch nearly all of it: the publication name, and
+# the '<year> (<11 digit id>)' filename the Internet Archive upload used.
+SCAN_REJECT = re.compile(
+    r"\b(journal|review|magazine|library|gazette|treatise|proceedings|"
+    r"almanac|catalogue|handbook|encyclop\w*|familjebok|advertisement|"
+    r"a book for students|annual report)\b",
+    re.IGNORECASE
+)
+
+BOOK_SCAN = re.compile(r"\b1[6-9]\d{2}\b.*\(\s*\d{9,}\s*\)")
+
+# False friends, per class. The Liverpool Overhead Railway was an
+# elevated line, not an electrified one, and its museum pieces - a cap
+# badge, replica seats, a preserved carriage - match 'overhead railway'
+# perfectly while showing no overhead wire at all.
+CLASS_REJECT = {
+    "overhead_wire": re.compile(r"liverpool overhead railway", re.IGNORECASE),
+}
+
+
+def isPhotograph(title: str, category: str = "") -> bool:
+    """Whether a Commons title looks like a photo of the real thing."""
+    if REJECT.search(title) or SCAN_REJECT.search(title):
+        return False
+
+    if BOOK_SCAN.search(title):
+        return False
+
+    blocked = CLASS_REJECT.get(category)
+
+    return not (blocked and blocked.search(title))
+
 ALLOWED_EXT = {".jpg", ".jpeg", ".png"}
+
+# Slugs a caller wants left alone - images held out for a benchmark, or
+# rejected by a visual audit. Set this before calling collect().
+SKIP_SLUGS: set[str] = set()
+
+
+def slugOf(title: str) -> str:
+    """The slug part of the filename a Commons title turns into."""
+    stem = Path(title.removeprefix("File:")).stem
+
+    slug = re.sub(r"[^a-zA-Z0-9]+", "-", stem).strip("-").lower()[:60]
+
+    # A title written in a non-Latin script has no Latin characters to
+    # keep and slugs away to nothing, so every Japanese or Cyrillic file
+    # in a run lands on '<category>_.jpg' and quietly overwrites the one
+    # before it. A digest of the title is stable between runs, which a
+    # counter or hash() would not be.
+    return slug or f"img-{hashlib.md5(stem.encode()).hexdigest()[:10]}"
+
+
+def readExcluded(path: Path) -> set[str]:
+    """Filenames rejected by hand, one per line, '#' starts a comment.
+
+    Title filters catch scans and false friends, but some rejects need
+    eyes on the image - a steam special standing under Swiss catenary is
+    a perfectly good photograph that simply is not the class it landed
+    in. Without this the next collector run downloads it straight back.
+    """
+    if not path.is_file():
+        return set()
+
+    names = set()
+
+    for line in path.read_text(encoding="utf-8").splitlines():
+        name = line.split("#")[0].strip()
+
+        if name:
+            names.add(name)
+
+    return names
 
 
 def apiGet(params: dict) -> dict:
@@ -94,7 +176,7 @@ def stripHtml(value: str) -> str:
     return " ".join(html.unescape(text).split())
 
 
-def search(query: str, limit: int) -> list[dict]:
+def search(query: str, limit: int, category: str = "") -> list[dict]:
     """Photos matching a query, best search-rank first."""
     data = apiGet({
         "action": "query",
@@ -118,7 +200,7 @@ def search(query: str, limit: int) -> list[dict]:
 
         src = info.get("thumburl") or info.get("url")
 
-        if not src or REJECT.search(title):
+        if not src or not isPhotograph(title, category):
             continue
 
         meta = info.get("extmetadata", {})
@@ -138,18 +220,12 @@ def search(query: str, limit: int) -> list[dict]:
 
 def makeFilename(category: str, title: str) -> str:
     """A short, safe filename derived from the Commons file name."""
-    name = title.removeprefix("File:")
-
-    stem = Path(name).stem
-
-    ext = Path(name).suffix.lower()
+    ext = Path(title.removeprefix("File:")).suffix.lower()
 
     if ext not in ALLOWED_EXT:
         ext = ".jpg"
 
-    slug = re.sub(r"[^a-zA-Z0-9]+", "-", stem).strip("-").lower()
-
-    return f"{category}_{slug[:60]}{ext}"
+    return f"{category}_{slugOf(title)}{ext}"
 
 
 def download(url: str, dest: Path, attempts: int = 4) -> bool:
@@ -189,6 +265,7 @@ def collect(category: str, queries: list[str], target: int) -> list[dict]:
 
     rows = []
     seen = set()
+    skipped = 0
 
     existing = sorted(
         p for p in folder.iterdir()
@@ -204,7 +281,7 @@ def collect(category: str, queries: list[str], target: int) -> list[dict]:
 
     for query in queries:
         try:
-            candidates.extend(search(query, per_query))
+            candidates.extend(search(query, per_query, category))
         except Exception as err:
             print(f"  search failed for '{query}': {err}")
 
@@ -221,7 +298,16 @@ def collect(category: str, queries: list[str], target: int) -> list[dict]:
 
         seen.add(item["title"])
 
+        # held out for a benchmark, or rejected by an audit
+        if slugOf(item["title"]) in SKIP_SLUGS:
+            skipped += 1
+            continue
+
         dest = folder / makeFilename(category, item["title"])
+
+        if dest.name in SKIP_SLUGS:
+            skipped += 1
+            continue
 
         if dest.exists():
             rows.append({**item, "category": category, "file": dest.name})
@@ -238,14 +324,57 @@ def collect(category: str, queries: list[str], target: int) -> list[dict]:
 
         print(f"  [{count}/{target}] {dest.name}")
 
+    if skipped:
+        print(f"  skipped {skipped} held out or rejected")
+
     if count < target:
         print(f"  only found {count} usable images for {category}")
 
     return rows
 
 
-def writeManifest(rows: list[dict]) -> None:
-    with MANIFEST.open("w", newline="", encoding="utf-8") as f:
+def readManifest(manifest: Path = MANIFEST) -> list[dict]:
+    """Rows already recorded, so a --only run does not drop the rest."""
+    if not manifest.is_file():
+        return []
+
+    with manifest.open(newline="", encoding="utf-8") as f:
+        return [
+            {
+                "category": row["category"],
+                "file": row["file"],
+                "descriptionurl": row["source_page"],
+                "author": row["author"],
+                "license": row["license"],
+            }
+            for row in csv.DictReader(f)
+        ]
+
+
+def mergeRows(rows: list[dict], manifest: Path = MANIFEST,
+              image_dir: Path = IMAGE_DIR) -> list[dict]:
+    """This run's rows, laid over whatever was recorded before."""
+    merged = {
+        (row["category"], row["file"]): row
+        for row in readManifest(manifest)
+    }
+
+    # a re-download of the same file wins, its metadata is fresher
+    for row in rows:
+        merged[(row["category"], row["file"])] = row
+
+    # a row whose image has since been deleted is just noise
+    return [
+        row for row in merged.values()
+        if (image_dir / row["category"] / row["file"]).is_file()
+    ]
+
+
+def writeManifest(rows: list[dict], manifest: Path = MANIFEST,
+                  image_dir: Path = IMAGE_DIR) -> None:
+    rows = mergeRows(rows, manifest, image_dir)
+
+    with manifest.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
 
         writer.writerow(

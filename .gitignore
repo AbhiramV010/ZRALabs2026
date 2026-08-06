@@ -66,6 +66,8 @@ cython_debug/
 
 reviews/
 .claude
-# images
 
-images
+# Scraped training images, ~174MB. Rebuild them with model/collect_images.py
+# and model/collect_wire.py, the attribution list is kept in git.
+images/*
+!images/ATTRIBUTION.csv

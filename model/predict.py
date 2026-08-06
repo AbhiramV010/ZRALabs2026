@@ -79,6 +79,34 @@ def overlap_area(a, b):
     return (right - left) * (bottom - top)
 
 
+def encloses(outer, inner):
+    """Whether one box sits wholly inside another."""
+    return (outer[0] <= inner[0] and outer[1] <= inner[1]
+            and outer[2] >= inner[2] and outer[3] >= inner[3])
+
+
+def drop_containers(hits):
+    """Keep the boxes drawn inside, drop the same-class box around them."""
+    kept = []
+
+    for label, confidence, box in hits:
+        area = (box[2] - box[0]) * (box[3] - box[1])
+
+        # a box wrapping same-class boxes is the wider, vaguer read of them.
+        # strictly bigger, so a pair of identical boxes can't cancel out
+        wraps_another = any(
+            other_label == label
+            and encloses(box, other_box)
+            and (other_box[2] - other_box[0]) * (other_box[3] - other_box[1]) < area
+            for other_label, _, other_box in hits
+        )
+
+        if not wraps_another:
+            kept.append((label, confidence, box))
+
+    return kept
+
+
 def same_object(a, b):
     """Whether two windows are looking at one thing."""
     overlap = overlap_area(a, b)
@@ -205,7 +233,7 @@ class RailwayClassifier:
             if probabilities[best] >= confidence:
                 hits.append((prettify(self.classes[best]), probabilities[best], box))
 
-        merged = merge_hits(hits)
+        merged = drop_containers(merge_hits(hits))
 
         # the strongest few objects, whatever mix of classes that turns out to be
         return sorted(merged, key=lambda hit: -hit[1])[:limit]

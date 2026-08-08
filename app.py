@@ -77,18 +77,39 @@ def render_header():
 def render_class_legend():
     st.subheader("What it looks for")
 
-    for index, (label, description) in enumerate(CLASSES.items()):
+    st.caption(
+        "Each class is drawn in its own colour on the marked-up image."
+    )
 
-        with st.container(border=True, gap=None, key=f"legend-{index}"):
+    st.space("small")
 
-            probe = DetectionResult(label=label)
+    items = list(CLASSES.items())
 
-            st.badge(
-                label,
-                color=probe.get_badge_color()
-            )
+    # two per row, so the landing page isn't one long column of cards
+    for start in range(0, len(items), 2):
+        cols = st.columns(2, gap="small")
 
-            st.caption(description)
+        for offset, (label, description) in enumerate(items[start:start + 2]):
+
+            index = start + offset
+
+            with cols[offset]:
+                # stretch keeps both cards in a row the same height
+                with st.container(
+                    border=True,
+                    gap=None,
+                    height="stretch",
+                    key=f"legend-{index}"
+                ):
+
+                    probe = DetectionResult(label=label)
+
+                    st.badge(
+                        label,
+                        color=probe.get_badge_color()
+                    )
+
+                    st.caption(description)
 
 
 # st.metric truncates long values, these cards don't
@@ -129,9 +150,23 @@ def render_summary(detections):
         render_card(
             2,
             "Best match",
-            top.label,
+            # the class colour, so the card points at its own box
+            f":{top.get_badge_color()}[{top.label}]",
             f"{top.confidence:.0%} confident"
         )
+
+
+# st.progress paints every bar the theme's primary. These rules repaint each
+# one in its class colour, so a row reads as the box it came from. The style
+# block is collapsed by style.css, it takes no room in the layout.
+def paint_confidence_bars(prefix, results):
+    rules = "\n".join(
+        f'.st-key-{prefix}-{index} [data-testid="stProgressBarTrack"] > div '
+        f'{{ background-color: {res.get_color()}; }}'
+        for index, res in enumerate(results)
+    )
+
+    st.html(f"<style>{rules}</style>")
 
 
 def render_detection(res, key=None):
@@ -230,7 +265,7 @@ else:
 
         st.image(
             labelImage(detections, image.copy()),
-            caption="Detected objects",
+            caption="Box colours match the badges below",
             width="stretch"
         )
 
@@ -238,12 +273,19 @@ else:
 
         st.subheader("Detections")
 
+        paint_confidence_bars("detection", detections)
+
         for index, res in enumerate(detections):
             render_detection(res, key=f"detection-{index}")
 
     st.space("medium")
 
-    with st.expander("Whole-frame class confidence"):
+    with st.expander(
+        "Whole-frame class confidence",
+        icon=":material/equalizer:"
+    ):
+
+        paint_confidence_bars("ranked", ranked)
 
         for index, res in enumerate(ranked):
             render_detection(res, key=f"ranked-{index}")

@@ -12,14 +12,22 @@
     height: 5.5rem;
 }
 
+/* the little running man next to Stop, the word is enough */
+[data-testid="stStatusWidgetRunningIcon"] {
+    display: none;
+}
+
 /* 1.25x the stock 736px, matching the base font size */
 [data-testid="stMainBlockContainer"] {
     max-width: 920px;
     padding-top: 6.5rem;
 }
 
-[data-testid="stHorizontalBlock"] [data-testid="stVerticalBlockBorderWrapper"] > div {
-    padding: 0.35rem 0.5rem;
+/* A style-only st.html block renders nothing but still takes a slot, and so a
+   gap, in the flex column it sits in. Collapse it, the app injects one of
+   these per results list to colour the confidence bars. */
+[data-testid="stElementContainer"]:has(> [data-testid="stHtml"] > style:only-child) {
+    display: none;
 }
 
 /* ---- Motion ---- */
@@ -115,33 +123,56 @@
    as another delay. */
 .st-key-summary-1,
 .st-key-detection-1,
-.st-key-ranked-1,
-.st-key-legend-1 {
+.st-key-ranked-1 {
     animation-delay: 35ms;
 }
 
 .st-key-summary-2,
 .st-key-detection-2,
-.st-key-ranked-2,
-.st-key-legend-2 {
+.st-key-ranked-2 {
     animation-delay: 70ms;
 }
 
-.st-key-ranked-3,
-.st-key-legend-3 {
+.st-key-ranked-3 {
     animation-delay: 105ms;
 }
 
-.st-key-ranked-4,
-.st-key-legend-4 {
+.st-key-ranked-4 {
     animation-delay: 140ms;
 }
 
-/* summary cards lift under the pointer */
-[class*="st-key-summary-"] {
-    transition: transform 160ms ease-out;
+.st-key-ranked-5 {
+    animation-delay: 175ms;
 }
 
+/* the legend is a two-column grid, so it staggers by row rather than by card.
+   Row one keeps the default 0ms. */
+.st-key-legend-2,
+.st-key-legend-3 {
+    animation-delay: 35ms;
+}
+
+.st-key-legend-4,
+.st-key-legend-5 {
+    animation-delay: 70ms;
+}
+
+/* every card warms its border under the pointer */
+[class*="st-key-summary-"],
+[class*="st-key-detection-"],
+[class*="st-key-ranked-"],
+[class*="st-key-legend-"] {
+    transition: border-color 160ms ease-out, transform 160ms ease-out;
+}
+
+[class*="st-key-summary-"]:hover,
+[class*="st-key-detection-"]:hover,
+[class*="st-key-ranked-"]:hover,
+[class*="st-key-legend-"]:hover {
+    border-color: rgba(45, 212, 191, 0.4);
+}
+
+/* only the summary row lifts, it's the one the eye lands on first */
 [class*="st-key-summary-"]:hover {
     transform: translateY(-2px);
 }
@@ -198,4 +229,10 @@
 
 [data-testid="stFileUploaderDropzone"] {
     background: transparent;
+}
+
+/* the same warm-up the cards get, so the drop target reads as one of them */
+[data-testid="stFileUploaderDropzone"]:hover {
+    border-color: rgba(45, 212, 191, 0.4);
+    background: rgba(20, 184, 166, 0.04);
 }

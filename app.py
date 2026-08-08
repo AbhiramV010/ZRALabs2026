@@ -208,20 +208,6 @@ def detect(image):
     return sorted(results, key=lambda res: -res.confidence)
 
 
-def classify(image):
-    """The whole-frame verdict, one entry per class, best first."""
-    ranked = list(model.classify(image))
-
-    return [
-        DetectionResult(
-            label=label,
-            description=describe(label),
-            confidence=confidence
-        )
-        for label, confidence in sorted(ranked, key=lambda pair: -pair[1])
-    ]
-
-
 render_header()
 
 st.space("medium")
@@ -245,7 +231,6 @@ else:
 
     with st.spinner("Scanning image ...", show_time=True):
         detections = detect(image)
-        ranked = classify(image)
 
     scanner.empty()
 
@@ -253,8 +238,7 @@ else:
 
     if not detections:
         st.warning(
-            "No railway assets recognised in this frame. The whole-frame "
-            "ranking below is shown anyway.",
+            "No railway assets recognised in this frame.",
             icon=":material/search_off:"
         )
 
@@ -277,15 +261,3 @@ else:
 
         for index, res in enumerate(detections):
             render_detection(res, key=f"detection-{index}")
-
-    st.space("medium")
-
-    with st.expander(
-        "Whole-frame class confidence",
-        icon=":material/equalizer:"
-    ):
-
-        paint_confidence_bars("ranked", ranked)
-
-        for index, res in enumerate(ranked):
-            render_detection(res, key=f"ranked-{index}")

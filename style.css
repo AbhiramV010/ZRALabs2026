@@ -106,7 +106,6 @@
 .st-key-app-header,
 [class*="st-key-summary-"],
 [class*="st-key-detection-"],
-[class*="st-key-ranked-"],
 [class*="st-key-legend-"] {
     animation: rail-enter 240ms ease-out backwards;
 }
@@ -122,27 +121,13 @@
    already waited on, and a queue of cards sliding in one by one reads
    as another delay. */
 .st-key-summary-1,
-.st-key-detection-1,
-.st-key-ranked-1 {
+.st-key-detection-1 {
     animation-delay: 35ms;
 }
 
 .st-key-summary-2,
-.st-key-detection-2,
-.st-key-ranked-2 {
+.st-key-detection-2 {
     animation-delay: 70ms;
-}
-
-.st-key-ranked-3 {
-    animation-delay: 105ms;
-}
-
-.st-key-ranked-4 {
-    animation-delay: 140ms;
-}
-
-.st-key-ranked-5 {
-    animation-delay: 175ms;
 }
 
 /* the legend is a two-column grid, so it staggers by row rather than by card.
@@ -160,14 +145,12 @@
 /* every card warms its border under the pointer */
 [class*="st-key-summary-"],
 [class*="st-key-detection-"],
-[class*="st-key-ranked-"],
 [class*="st-key-legend-"] {
     transition: border-color 160ms ease-out, transform 160ms ease-out;
 }
 
 [class*="st-key-summary-"]:hover,
 [class*="st-key-detection-"]:hover,
-[class*="st-key-ranked-"]:hover,
 [class*="st-key-legend-"]:hover {
     border-color: rgba(45, 212, 191, 0.4);
 }
@@ -206,7 +189,6 @@
     .st-key-app-header,
     [class*="st-key-summary-"],
     [class*="st-key-detection-"],
-    [class*="st-key-ranked-"],
     [class*="st-key-legend-"],
     [data-testid="stProgressBarTrack"] > div {
         animation: none;

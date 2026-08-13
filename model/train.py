@@ -21,7 +21,10 @@ if __package__ in (None, ""):
     from dataset import build_loaders
     from network import (
         CHECKPOINT_PATH,
+        DEFAULT_ARCHITECTURE,
+        architecture_names,
         build_model,
+        count_parameters,
         pick_device,
         save_checkpoint,
         unfreeze_last_block,
@@ -30,7 +33,10 @@ else:
     from .dataset import build_loaders
     from .network import (
         CHECKPOINT_PATH,
+        DEFAULT_ARCHITECTURE,
+        architecture_names,
         build_model,
+        count_parameters,
         pick_device,
         save_checkpoint,
         unfreeze_last_block,
@@ -147,9 +153,22 @@ def main():
     parser.add_argument("--finetune-lr", type=float, default=1e-4,
                         help="learning rate once the backbone is unfrozen")
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--output", type=Path, default=CHECKPOINT_PATH)
+    parser.add_argument("--arch", default=DEFAULT_ARCHITECTURE,
+                        choices=architecture_names(),
+                        help=f"backbone to train (default {DEFAULT_ARCHITECTURE})")
+    parser.add_argument("--output", type=Path, default=None,
+                        help="where to write the checkpoint")
 
     args = parser.parse_args()
+
+    # a run of a different backbone gets its own file unless asked
+    # otherwise. Comparing six of these means training six of them, and
+    # the default path holds the one the app loads
+    if args.output is None:
+        args.output = (
+            CHECKPOINT_PATH if args.arch == DEFAULT_ARCHITECTURE
+            else CHECKPOINT_PATH.with_name(f"railway_classifier_{args.arch}.pt")
+        )
 
     torch.manual_seed(args.seed)
 
@@ -167,7 +186,13 @@ def main():
         f"{len(val_loader.dataset)} val, {len(test_loader.dataset)} test"
     )
 
-    model = build_model(len(classes), freeze_backbone=True).to(device)
+    model = build_model(
+        len(classes),
+        architecture=args.arch,
+        freeze_backbone=True
+    ).to(device)
+
+    print(f"Backbone: {args.arch}, {count_parameters(model):,} parameters")
 
     state = {
         "best_val_acc": 0.0,
@@ -188,7 +213,7 @@ def main():
     )
 
     if not args.no_finetune:
-        unfreeze_last_block(model)
+        unfreeze_last_block(model, args.arch)
 
         train_phase(
             model,
@@ -196,7 +221,7 @@ def main():
             device,
             args.finetune_epochs,
             args.finetune_lr,
-            "Phase 2: fine tuning layer4",
+            "Phase 2: fine tuning the last block",
             state
         )
 
@@ -217,14 +242,17 @@ def main():
     print(f"Held-out test accuracy:   {test_acc:.1%}")
 
     metrics = {
+        "architecture": args.arch,
+        "parameters": count_parameters(model),
         "val_accuracy": round(state["best_val_acc"], 4),
         "test_accuracy": round(test_acc, 4),
         "test_loss": round(test_loss, 4),
         "epochs": args.epochs + (0 if args.no_finetune else args.finetune_epochs),
         "seed": args.seed,
+        "train_minutes": round(elapsed / 60, 2),
     }
 
-    save_checkpoint(model, classes, args.output, metrics)
+    save_checkpoint(model, classes, args.output, metrics, architecture=args.arch)
 
     # a run sent elsewhere by --output keeps its history with it. Writing
     # to the one path regardless means a two-epoch trial overwrites the

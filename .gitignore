@@ -75,3 +75,7 @@ images/*
 # What store.py writes on a device: the capture database and its
 # thumbnails. Field data, not source.
 captures/
+
+# Converted models from model/export.py. Rebuild them from a checkpoint,
+# they are large and none of them are the source of truth.
+model/exported/

@@ -17,9 +17,11 @@ than an object outline. There is no YOLO in this project.
 | `collect_wire.py` | downloads `images/overhead_wire`, cropped to the wire |
 | `dataset.py` | loads `images/`, splits it, defines the transforms |
 | `augment.py` | writes augmented copies of the photos into `images/` |
-| `network.py` | builds the ResNet18, saves and loads checkpoints |
+| `network.py` | the backbone registry, saves and loads checkpoints |
 | `train.py` | trains the model, writes `railway_classifier.pt` |
 | `predict.py` | classifies an image, finds the assets in one, and is the class the app calls |
+| `export.py` | converts a checkpoint to ONNX, ExecuTorch, TFLite or TorchScript |
+| `backends.py` | runs any of those formats behind one interface |
 
 ## Training it
 
@@ -47,7 +49,12 @@ Options worth knowing:
 python model/train.py --epochs 20 --finetune-epochs 15   # train longer
 python model/train.py --no-finetune                      # head only, quicker
 python model/train.py --seed 7                           # a different split
+python model/train.py --arch mobilenet_v3_small          # a lighter backbone
 ```
+
+Training a backbone other than the default writes to
+`railway_classifier_<arch>.pt` rather than over the checkpoint the app
+loads, so a comparison run cannot cost you the working model.
 
 Nothing hardcodes the class list - it comes from the folder names under
 `images/`, so adding a seventh class means adding a seventh folder.
@@ -56,8 +63,9 @@ Nothing hardcodes the class list - it comes from the folder names under
 
 There are six classes and a few hundred photographs. That is far too few
 to train a network from scratch, so this uses **transfer learning**: a
-ResNet18 that already learned general visual features from ImageNet,
-with its 1000-class output layer replaced by a 6-class one.
+backbone that already learned general visual features from ImageNet,
+with its 1000-class output layer replaced by a 6-class one. Which
+backbone is `--arch`, and the default is a ResNet18.
 
 Training runs in two phases:
 
@@ -65,10 +73,12 @@ Training runs in two phases:
    layer learns. A randomly initialised head produces large, wild
    gradients at first, and freezing stops those from damaging features
    that took ImageNet a long time to learn.
-2. **Fine tuning.** The last convolution block (`layer4`) is unfrozen
-   and both train together at a 10x lower rate. Early layers detect
-   edges and textures that transfer as-is; the last block is the
-   class-specific one, so it is the part worth adapting.
+2. **Fine tuning.** The last convolution block is unfrozen and both
+   train together at a 10x lower rate. Early layers detect edges and
+   textures that transfer as-is; the last block is the class-specific
+   one, so it is the part worth adapting. Which modules those are is per
+   backbone - `layer4` in the ResNet, the last few entries of
+   `features` in the mobile-style nets - and `ARCHITECTURES` records it.
 
 The split is 70/15/15, stratified, so every class appears in every
 split in the same proportion. A plain random split this small can
@@ -236,10 +246,102 @@ catenary is mostly sky. The whole-frame ranking is where this class is
 strongest; it is the least likely of the six to get a tight box drawn
 round it.
 
+## Choosing a backbone
+
+`--arch` picks one of six, and the choice is written into the checkpoint
+so `load_checkpoint` rebuilds whatever was actually trained. Parameter
+counts are with the 6-class head attached:
+
+| architecture | parameters | note |
+| --- | ---: | --- |
+| `resnet18` | 11,179,590 | the default, and the heaviest |
+| `mobilenet_v3_large` | 4,209,718 | |
+| `efficientnet_b0` | 4,015,234 | best accuracy per FLOP of this set |
+| `mobilenet_v3_small` | 1,524,006 | |
+| `squeezenet1_1` | 725,574 | its head is a 1x1 convolution, not a linear layer |
+| `shufflenet_v2_x0_5` | 347,942 | the floor. 32x smaller than the default |
+
+Torchvision ships `efficientnet_b0`, not the `lite0` variant. Lite0
+drops the squeeze-excite blocks and hard-swish activations that some
+accelerator delegates refuse to accept, so if a board rejects b0 that is
+the first thing to try instead - it lives in `timm` rather than
+torchvision.
+
+**None of these fit an ESP-32.** The 08/11 meeting named an Arduino or
+an ESP-32 as the drone-mounted target; an ESP32-S3 running ESP-DL is in
+the neighbourhood of a 96x96 int8 person-detector, and the smallest
+model here is an order of magnitude past that at 224x224. For that class
+of board the honest options are capture-and-forward, or a separately
+trained binary presence check. The devices the notes name for offline
+work - phone, tablet, low end computer - are where these six become
+real. Measuring that gap is the whitepaper's job, and `bench.py` does
+not exist yet.
+
+## Exporting for a device
+
+```bash
+python model/export.py --format onnx
+python model/export.py --format all --quantize
+```
+
+Writes into `model/exported/`, one `<name>.classes.json` beside each
+artifact - none of these formats carry the label list, and a model that
+cannot name its own outputs is not much use at the far end.
+
+| format | file | needs |
+| --- | --- | --- |
+| `torchscript` | `.pt` | nothing, torch is already here |
+| `onnx` | `.onnx` | `onnx`, `onnxscript`; `onnxruntime` to run it |
+| `executorch` | `.pte` | `executorch` |
+| `tflite` | `.tflite` | `ai-edge-torch` to write, `ai-edge-litert` to run |
+
+A missing package skips that format with a line saying which one, rather
+than failing the run. `--quantize` adds an int8 ONNX calibrated on the
+validation split - static quantisation, not dynamic, because dynamic
+only touches linear layers and these backbones are nearly all
+convolution.
+
+Only TorchScript is exercised on the machine this was written on. ONNX
+and ExecuTorch need their packages installed; `ai-edge-torch` needs
+Linux, so a `.tflite` cannot be produced on Windows at all.
+
+`backends.py` then runs any of them behind one interface, so nothing
+upstream has to know which it got:
+
+```bash
+python model/backends.py     # what this machine can run
+```
+
+Batches cross that interface as numpy rather than torch tensors, on
+purpose: the machines most likely to be running an exported model are
+the ones least able to afford a torch install.
+
+## Scan profiles
+
+`detect()` classifies a grid of overlapping crops, and how dense that
+grid is decides nearly the whole cost of a scan. Three profiles, on a
+1280x960 photograph:
+
+| profile | windows | what it is for |
+| --- | ---: | --- |
+| `full` | 69 | the default. Three scales, half-window step |
+| `balanced` | 29 | two scales, longer step |
+| `edge` | 6 | one scale, coarse step, small batches |
+
+```bash
+python model/predict.py photo.jpg --detect --profile edge
+```
+
+`ZRA_SCAN_PROFILE` sets the default, so a device picks its own without
+any code knowing. The cap on how many detections come back is part of
+the profile rather than a constant - it was three, which is fewer than
+some frames genuinely contain, and is now eight on `full`.
+
 ## Checking a trained model
 
 ```bash
 python model/predict.py some_photo.jpg
+python model/predict.py some_photo.jpg --model exported/railway.onnx
 ```
 
 The scores stored in the checkpoint come from the run that produced it -

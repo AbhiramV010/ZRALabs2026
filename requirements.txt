@@ -3,3 +3,15 @@ pillow>=10.0.0
 numpy>=1.24.0
 torch>=2.0.0
 torchvision>=0.15.0
+
+# Edge export and inference, each optional - model/export.py and
+# model/backends.py skip the target whose package is missing, and say so.
+# Run 'python model/backends.py' to see what this machine has.
+#
+# onnx>=1.16.0          # export to .onnx
+# onnxscript>=0.1.0     # torch 2.9+ needs this for the export as well
+# onnxruntime>=1.18.0   # running .onnx, and int8 quantisation
+# executorch>=1.0.0     # export and run .pte, PyTorch's on-device runtime
+# ai-edge-torch>=0.2.0  # export to .tflite (Linux only)
+# ai-edge-litert>=1.0.0 # running .tflite - LiteRT, the renamed TFLite
+# tflite-runtime>=2.14  # the older slim runtime, on a Pi or a Coral

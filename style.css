@@ -102,10 +102,10 @@
     50% { opacity: 0.75; }
 }
 
-/* cards and rows pull in from the left, staggered like carriages */
+/* cards and rows pull in from the left, staggered like carriages. Results
+   are deliberately left out - they land after a scan the user has already
+   waited on, where any entrance motion reads as more delay. */
 .st-key-app-header,
-[class*="st-key-summary-"],
-[class*="st-key-detection-"],
 [class*="st-key-legend-"] {
     animation: rail-enter 240ms ease-out backwards;
 }
@@ -115,19 +115,6 @@
         opacity: 0;
         transform: translateX(-5px);
     }
-}
-
-/* The stagger is halved. Results land right after a scan the user has
-   already waited on, and a queue of cards sliding in one by one reads
-   as another delay. */
-.st-key-summary-1,
-.st-key-detection-1 {
-    animation-delay: 35ms;
-}
-
-.st-key-summary-2,
-.st-key-detection-2 {
-    animation-delay: 70ms;
 }
 
 /* the legend is a two-column grid, so it staggers by row rather than by card.
@@ -160,37 +147,12 @@
     transform: translateY(-2px);
 }
 
-.stImage {
-    animation: rail-arrive 240ms ease-out;
-}
-
-@keyframes rail-arrive {
-    from {
-        opacity: 0;
-        transform: translateY(5px);
-    }
-}
-
-/* confidence bars fill from the left */
-[data-testid="stProgressBarTrack"] > div {
-    transform-origin: left;
-    animation: rail-fill 400ms ease-out;
-}
-
-@keyframes rail-fill {
-    from { transform: scaleX(0); }
-}
-
 @media (prefers-reduced-motion: reduce) {
     .rail,
     .rail-live::after,
     .lamp,
-    .stImage,
     .st-key-app-header,
-    [class*="st-key-summary-"],
-    [class*="st-key-detection-"],
-    [class*="st-key-legend-"],
-    [data-testid="stProgressBarTrack"] > div {
+    [class*="st-key-legend-"] {
         animation: none;
     }
 

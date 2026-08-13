@@ -67,7 +67,7 @@ def render_header():
         st.title("Railway Object Detection")
 
         st.caption(
-            "Upload a railway-related photo, and the model marks up the "
+            "Upload railway-related photos, and the model marks up the "
             "assets it recognises, with a confidence score for each."
         )
 
@@ -190,6 +190,39 @@ def describe(label):
     return CLASSES.get(label, "Railway asset")
 
 
+def shift_carousel(delta, total):
+    st.session_state.carousel_index = min(
+        max(st.session_state.carousel_index + delta, 0), total - 1
+    )
+
+
+def render_carousel_nav(current_file, index, total):
+    cols = st.columns([1, 3, 1], vertical_alignment="center", gap="small")
+
+    with cols[0]:
+        st.button(
+            "Previous",
+            icon=":material/chevron_left:",
+            disabled=index == 0,
+            width="stretch",
+            on_click=shift_carousel,
+            args=(-1, total)
+        )
+
+    with cols[1]:
+        st.caption(f"Image {index + 1} of {total} · {current_file.name}")
+
+    with cols[2]:
+        st.button(
+            "Next",
+            icon=":material/chevron_right:",
+            disabled=index == total - 1,
+            width="stretch",
+            on_click=shift_carousel,
+            args=(1, total)
+        )
+
+
 def detect(image):
     """Everything the model finds in the frame, strongest first."""
     found = list(model.detect(image))
@@ -212,27 +245,46 @@ render_header()
 
 st.space("medium")
 
-uploaded_file = st.file_uploader(
-    "Upload an image",
+uploaded_files = st.file_uploader(
+    "Upload images",
     type=["jpg", "jpeg", "png"],
-    help="JPG/JPEG/PNG"
+    help="JPG/JPEG/PNG",
+    accept_multiple_files=True
 )
 
-if uploaded_file is None:
+if not uploaded_files:
     st.space("medium")
     render_class_legend()
 
 else:
-    image = Image.open(uploaded_file)
+    ids = [f.file_id for f in uploaded_files]
 
-    # the running signal light is cleared once the scan finishes
-    scanner = st.empty()
-    scanner.html(RAIL_SCANNING)
+    # a fresh upload set starts the carousel over and drops stale results
+    if st.session_state.get("carousel_ids") != ids:
+        st.session_state.carousel_ids = ids
+        st.session_state.carousel_index = 0
+        st.session_state.carousel_cache = {}
 
-    with st.spinner("Scanning image ...", show_time=True):
-        detections = detect(image)
+    total = len(uploaded_files)
+    carousel_index = st.session_state.carousel_index
+    current_file = uploaded_files[carousel_index]
+    image = Image.open(current_file)
 
-    scanner.empty()
+    st.space("medium")
+
+    render_carousel_nav(current_file, carousel_index, total)
+
+    # each image is scanned once per session, Previous/Next just replays it
+    if current_file.file_id not in st.session_state.carousel_cache:
+        scanner = st.empty()
+        scanner.html(RAIL_SCANNING)
+
+        with st.spinner("Scanning image ...", show_time=True):
+            st.session_state.carousel_cache[current_file.file_id] = detect(image)
+
+        scanner.empty()
+
+    detections = st.session_state.carousel_cache[current_file.file_id]
 
     st.space("medium")
 

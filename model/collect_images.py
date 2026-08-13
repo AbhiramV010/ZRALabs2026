@@ -22,36 +22,63 @@ USER_AGENT = (
 
 IMAGE_DIR = Path("images")
 
+# how augment.py names its generated copies, see dataset.AUG_MARKER
+AUG_MARKER = "__aug"
+
 MANIFEST = IMAGE_DIR / "ATTRIBUTION.csv"
 
 # seconds between requests, Commons returns 429 if we go faster
 THROTTLE = 1.5
 
-# several searches per class, for variety
+# Several searches per class, for variety. The second group in each list
+# asks for the same asset from a different distance, height, hour or
+# season. A folder built from the first group alone is largely eye-level
+# daylight photographs, and a model trained on that reads an overcast
+# dusk shot from a phone held low as a different thing entirely.
 QUERIES = {
     "train": [
         "passenger train railway",
         "diesel locomotive railway",
         "electric multiple unit train",
         "freight train railway",
+        "train railway aerial view from above",
+        "train railway night long exposure",
+        "train railway snow winter",
+        "high speed train railway line",
+        "train approaching close up front",
     ],
     "track": [
         "railway track rails sleepers",
         "railway permanent way ballast",
         "railway points turnout",
         "railroad track curve",
+        "railway track aerial view from above",
+        "railway track night",
+        "railway track snow winter",
+        "railway track close up rail head",
+        "railway track tunnel bridge",
     ],
     "signal": [
         "railway signal light",
         "semaphore railway signal",
         "colour light railway signal",
         "railway signal gantry",
+        "railway signal at night illuminated",
+        "railway signal close up detail",
+        "ground shunting signal railway",
+        "railway signal snow winter",
+        "railway signal rear view lineside",
     ],
     "platform": [
         "railway station platform",
         "train platform passengers waiting",
         "island platform railway station",
         "platform edge railway station",
+        "railway platform at night",
+        "underground metro station platform",
+        "rural railway station platform",
+        "railway platform canopy roof",
+        "railway platform aerial view from above",
     ],
     # Commons is full of digitised trade periodicals that match anything
     # with 'electric railway' in it, so these lean on words that only
@@ -71,6 +98,11 @@ QUERIES = {
         "railroad crossing gate",
         "level crossing boom barrier train",
         "manned level crossing gates railway",
+        "level crossing at night lights",
+        "level crossing snow winter",
+        "level crossing aerial view from above",
+        "pedestrian level crossing gate railway",
+        "level crossing barrier close up",
     ],
 }
 
@@ -267,9 +299,12 @@ def collect(category: str, queries: list[str], target: int) -> list[dict]:
     seen = set()
     skipped = 0
 
+    # augment.py writes its copies into these same folders, and counting
+    # them here puts every class past any sane target - a run then quietly
+    # downloads nothing. --count is a count of photographs.
     existing = sorted(
         p for p in folder.iterdir()
-        if p.suffix.lower() in ALLOWED_EXT
+        if p.suffix.lower() in ALLOWED_EXT and AUG_MARKER not in p.stem
     )
 
     print(f"\n{category}: {len(existing)} already on disk, want {target}")

@@ -33,3 +33,26 @@ class DetectionResult:
 
     def get_badge_color(self):
         return self.BADGE_MAP.get(self.label.lower(), "gray")
+
+    # the colors above are for this screen, these two are for everywhere
+    # else - the local store writes these fields, and a sync client puts
+    # them on the wire. Corners go out as lists so a value survives a
+    # round trip through JSON as the same thing it went in as.
+    def to_dict(self):
+        return {
+            "label": self.label,
+            "description": self.description,
+            "confidence": self.confidence,
+            "rect_1": list(self.rect_1),
+            "rect_2": list(self.rect_2),
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            label=data.get("label", ""),
+            description=data.get("description", ""),
+            confidence=data.get("confidence", 0.0),
+            rect_1=tuple(data.get("rect_1") or (0, 0)),
+            rect_2=tuple(data.get("rect_2") or (0, 0)),
+        )

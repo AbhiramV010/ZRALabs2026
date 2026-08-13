@@ -71,3 +71,7 @@ reviews/
 # and model/collect_wire.py, the attribution list is kept in git.
 images/*
 !images/ATTRIBUTION.csv
+
+# What store.py writes on a device: the capture database and its
+# thumbnails. Field data, not source.
+captures/

@@ -3,9 +3,11 @@
 A PyTorch image classifier trained on `images/`. Given a photo it says
 which railway asset the photo is *of* - one label for the whole image.
 
-This is a classifier, not a detector. It does not draw boxes. YOLO in
-`app.py` does the boxes; this is the custom-trained model the brief asks
-for on top of it.
+This is a classifier, not a detector: the network only ever answers what
+one whole picture is. The boxes in the app come from `detect()` in
+`predict.py`, which runs that classifier over a grid of overlapping
+crops and merges the ones that agree, so a box is window shaped rather
+than an object outline. There is no YOLO in this project.
 
 ## The scripts
 
@@ -17,7 +19,7 @@ for on top of it.
 | `augment.py` | writes augmented copies of the photos into `images/` |
 | `network.py` | builds the ResNet18, saves and loads checkpoints |
 | `train.py` | trains the model, writes `railway_classifier.pt` |
-| `predict.py` | classifies a single image, and the class the app calls |
+| `predict.py` | classifies an image, finds the assets in one, and is the class the app calls |
 
 ## Training it
 
@@ -170,8 +172,8 @@ platform and every electric train a negative, and scored 40% recall for
 it.
 
 Cropping the class down to the wire fixes that at the source, so the
-sixth folder can just be a folder. `overhead_wire_classifier.pt` is
-still in the repo; nothing loads it.
+sixth folder can just be a folder. The specialist and its checkpoint are
+gone; `wire_training_history.json` is what is left of that run.
 
 ## How well it does
 

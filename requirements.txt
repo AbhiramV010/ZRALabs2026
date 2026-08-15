@@ -4,6 +4,13 @@ numpy>=1.24.0
 torch>=2.0.0
 torchvision>=0.15.0
 
+# api.py. sync.py and store.py need none of this - they are the halves
+# that run on the device, and they hold to the standard library and PIL
+fastapi>=0.110.0
+uvicorn>=0.27.0
+python-multipart>=0.0.9
+requests>=2.31.0
+
 # Edge export and inference, each optional - model/export.py and
 # model/backends.py skip the target whose package is missing, and say so.
 # Run 'python model/backends.py' to see what this machine has.

@@ -1,11 +1,21 @@
+import os
+
+import requests
 import streamlit as st
 from pathlib import Path
 from PIL import Image
-from labeller import *
+from labeller import labelImage
 from result import DetectionResult
 from model.predict import RailwayClassifier
+from store import CaptureStore
 
 ASSETS = Path(__file__).resolve().parent / "assets"
+
+# set this and the interface stops holding a model of its own, calling
+# api.py instead. Unset, it scans in process exactly as it always did
+API_URL = os.environ.get("ZRA_API_URL")
+
+API_TIMEOUT = 120
 
 # the six classes the checkpoint was trained on
 CLASSES = {
@@ -46,7 +56,9 @@ def get_model():
     return RailwayClassifier()
 
 
-model = get_model()
+@st.cache_resource
+def get_store():
+    return CaptureStore()
 
 try:
     with open("style.css") as f:
@@ -223,9 +235,38 @@ def render_carousel_nav(current_file, index, total):
         )
 
 
-def detect(image):
-    """Everything the model finds in the frame, strongest first."""
-    found = list(model.detect(image))
+def detect_via_api(upload):
+    """Ask the server what is in this frame.
+
+    The descriptions are filled in here rather than sent - they are
+    wording for this screen, and there is no reason to put them on a
+    wire that might be a radio link.
+    """
+    response = requests.post(
+        f"{API_URL.rstrip('/')}/v1/classify",
+        files={"files": (upload.name, upload.getvalue(), upload.type)},
+        timeout=API_TIMEOUT,
+    )
+
+    response.raise_for_status()
+
+    entry = response.json()["results"][0]
+
+    if entry.get("error"):
+        raise ValueError(entry["error"])
+
+    results = [
+        DetectionResult.from_dict(hit) for hit in entry["detections"]
+    ]
+
+    for res in results:
+        res.description = describe(res.label)
+
+    return results
+
+
+def detect_locally(image):
+    found = list(get_model().detect(image))
 
     results = [
         DetectionResult(
@@ -239,6 +280,78 @@ def detect(image):
     ]
 
     return sorted(results, key=lambda res: -res.confidence)
+
+
+def detect(image, upload=None):
+    """Everything the model finds in the frame, strongest first."""
+    if API_URL and upload is not None:
+
+        try:
+            return detect_via_api(upload)
+
+        # a server that is down should degrade to a slower interface,
+        # not a broken one. The whole point of this running offline is
+        # that the network is the part expected to fail
+        except Exception as error:
+            st.warning(
+                f"Server unreachable, scanning on this machine instead. ({error})",
+                icon=":material/cloud_off:"
+            )
+
+    return detect_locally(image)
+
+
+def scan(image, upload):
+    """Detect, and keep a record of it on this device."""
+    results = detect(image, upload)
+
+    try:
+        get_store().record(
+            image,
+            results,
+            source_name=upload.name,
+            model_name="railway_classifier",
+            model_version="api" if API_URL else get_model().backend.runtime,
+        )
+
+    # a full card or a read-only disk should not lose the user a scan
+    # they can still see on screen
+    except Exception as error:
+        st.warning(
+            f"Could not record this capture locally. ({error})",
+            icon=":material/save_as:"
+        )
+
+    return results
+
+
+def render_device_panel():
+    """What this machine is holding, and where it sends it."""
+    with st.sidebar:
+
+        st.subheader("On this device")
+
+        try:
+            stats = get_store().stats()
+
+        except Exception as error:
+            st.caption(f"No capture store here. ({error})")
+
+            return
+
+        st.metric("Captures kept", stats["captures"])
+
+        st.metric("Waiting to upload", stats["pending"])
+
+        st.caption(
+            f"{stats['detections']} detections, "
+            f"{stats['thumb_bytes'] / 1_000_000:.1f} MB of thumbnails"
+        )
+
+        st.caption(
+            f"Scanning on {API_URL}" if API_URL
+            else "Scanning on this machine"
+        )
 
 
 render_header()
@@ -280,7 +393,9 @@ else:
         scanner.html(RAIL_SCANNING)
 
         with st.spinner("Scanning image ...", show_time=True):
-            st.session_state.carousel_cache[current_file.file_id] = detect(image)
+            st.session_state.carousel_cache[current_file.file_id] = scan(
+                image, current_file
+            )
 
         scanner.empty()
 
@@ -313,3 +428,10 @@ else:
 
         for index, res in enumerate(detections):
             render_detection(res, key=f"detection-{index}")
+
+
+# last, not first. st.sidebar writes to the sidebar wherever it is
+# called from, and calling it up at the top would count the captures as
+# they were before this run recorded one, so the panel would always be
+# showing the answer to the previous upload
+render_device_panel()

@@ -281,6 +281,89 @@ class CaptureStore:
 
         return capture_uuid
 
+    def accept(self, capture, thumbnail=None):
+        """Take in a capture that arrived from somewhere else.
+
+        This is the far end of `sync.py`: the device keeps its own row
+        and its own uuid, and this side stores that uuid rather than
+        minting a new one. Idempotent, because a device that uploads a
+        batch and then loses the acknowledgement will send it again, and
+        that must not double the rows here.
+
+        Returns True when the capture was new to this store.
+        """
+        capture_uuid = capture["uuid"]
+
+        thumb_path = ""
+        thumb_bytes = 0
+
+        if thumbnail:
+            destination = self.thumb_root / f"{capture_uuid}.jpg"
+
+            destination.write_bytes(thumbnail)
+
+            thumb_path = str(destination.relative_to(self.root))
+            thumb_bytes = len(thumbnail)
+
+        with self.lock:
+            cursor = self.connection.execute(
+                """
+                INSERT OR IGNORE INTO captures (
+                    uuid, captured_at, device_id, source_name,
+                    latitude, longitude, width, height,
+                    thumb_path, thumb_bytes,
+                    model_name, model_version, sync_state, synced_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    capture_uuid,
+                    capture.get("captured_at") or utc_now(),
+                    capture.get("device_id") or "unknown",
+                    capture.get("source_name"),
+                    capture.get("latitude"),
+                    capture.get("longitude"),
+                    capture.get("width") or 0,
+                    capture.get("height") or 0,
+                    thumb_path,
+                    thumb_bytes,
+                    capture.get("model_name"),
+                    capture.get("model_version"),
+                    # it is already where it was being sent
+                    SYNC_SYNCED,
+                    utc_now(),
+                )
+            )
+
+            if not cursor.rowcount:
+                self.connection.commit()
+
+                return False
+
+            self.connection.executemany(
+                """
+                INSERT INTO detections (
+                    capture_id, label, description, confidence, x1, y1, x2, y2
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    (
+                        cursor.lastrowid,
+                        hit.get("label", ""),
+                        hit.get("description", ""),
+                        hit.get("confidence", 0.0),
+                        *(hit.get("rect_1") or (0, 0)),
+                        *(hit.get("rect_2") or (0, 0)),
+                    )
+                    for hit in capture.get("detections", [])
+                ]
+            )
+
+            self.connection.commit()
+
+        return True
+
     def build_capture(self, row, with_detections=True):
         """One captures row as a plain dict, ready for JSON."""
         capture = dict(row)
@@ -352,7 +435,14 @@ class CaptureStore:
             return self.build_capture(row) if row else None
 
     def thumbnail_path(self, capture):
-        """The absolute path of a capture's stored image."""
+        """A capture's stored image, or None if it arrived without one.
+
+        A metadata-only sync carries no picture, so a row on the
+        receiving end can legitimately have nothing to point at.
+        """
+        if not capture.get("thumb_path"):
+            return None
+
         return self.root / capture["thumb_path"]
 
     def mark_synced(self, uuids, synced_at=None):

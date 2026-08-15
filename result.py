@@ -7,7 +7,6 @@ class DetectionResult:
         "platform": "#4ADE80",
         "overhead wire": "#C084FC",
         "crossing gate": "#FB923C",
-        "test class": "#94A3B8"
     }
 
     # the same classes as streamlit badge color names
@@ -18,7 +17,6 @@ class DetectionResult:
         "platform": "green",
         "overhead wire": "violet",
         "crossing gate": "orange",
-        "test class": "gray"
     }
 
     def __init__(self, label="", description="", confidence=0.0, rect_1=(0, 0), rect_2=(0, 0)):

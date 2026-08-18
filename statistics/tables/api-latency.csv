@@ -1,0 +1,7 @@
+endpoint,median_ms,note
+GET /v1/health,7.398,store counts and uptime
+GET /v1/model,106.877,first call builds the model
+GET /v1/captures?limit=50,11.426,50 rows with detections
+POST /v1/sync,6.794,"25 captures, gzipped, metadata only"
+POST /v1/classify (1 image),395.856,edge profile
+POST /v1/classify (4 images),1535.452,383.86 ms per image

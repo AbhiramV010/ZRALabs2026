@@ -1,0 +1,11 @@
+metric,value,unit
+thumbnail_photo_like,10375,bytes
+thumbnail_noise_worst_case,96076,bytes
+thumbnail_flat_colour_floor,2087,bytes
+database_per_capture,588,bytes
+captures_per_gigabyte,97942,captures
+write_rate,18.52,per second
+ms_per_write,54.0,milliseconds
+read_stats,0.084,milliseconds
+read_captures_limit_50,2.981,milliseconds
+read_one_by_uuid,0.093,milliseconds

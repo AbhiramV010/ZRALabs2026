@@ -1,0 +1,4 @@
+tier,batch_size,sends_thumbnails,captures_in_batch,json_bytes,gzip_bytes,compression_ratio,gzip_bytes_per_capture
+low,10,False,10,4192,570,7.35,57
+medium,25,True,25,357412,232737,1.54,9309
+high,50,True,50,718535,469118,1.53,9382

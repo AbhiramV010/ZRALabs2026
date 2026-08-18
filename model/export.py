@@ -20,6 +20,7 @@ useless on the far end.
 
 import argparse
 import json
+import sys
 
 from pathlib import Path
 
@@ -51,8 +52,57 @@ def example_input(batch=1, size=IMAGE_SIZE):
     return torch.randn(batch, 3, size, size)
 
 
+def sidecars(path):
+    """Weight files an exporter left beside the graph, if any.
+
+    An ONNX graph can carry its tensors externally, in which case the
+    .onnx is a few dozen kB of structure and the weights are in a
+    neighbouring .data. Both have to be copied to a device, so both count
+    as the artifact.
+    """
+    path = Path(path)
+
+    candidates = {
+        path.parent / f"{path.name}.data",
+        path.parent / f"{path.stem}.data",
+    }
+
+    return sorted(item for item in candidates if item.is_file())
+
+
+def artifact_bytes(path):
+    """The size of an export, sidecars included."""
+    return (Path(path).stat().st_size
+            + sum(item.stat().st_size for item in sidecars(path)))
+
+
 def megabytes(path):
-    return Path(path).stat().st_size / 1_000_000
+    return artifact_bytes(path) / 1_000_000
+
+
+def allow_unicode_output():
+    """Let the exporter's progress lines print on a legacy console.
+
+    torch's ONNX exporter prints status lines ending in a check-mark
+    emoji. On a Windows console still defaulting to cp1252 that raises
+    UnicodeEncodeError from inside the exporter's own printing, part way
+    through a working export, and the traceback points at an encoder
+    rather than at anything to do with the model. A cosmetic character
+    should not end the run.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+
+        if reconfigure is None:
+            continue
+
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+
+        except (ValueError, OSError):
+            # a stream that will not be reconfigured is not worth failing
+            # an export over - the replacing handler below is the backstop
+            pass
 
 
 def export_torchscript(model, path, example=None):
@@ -84,6 +134,8 @@ def export_onnx(model, path, example=None):
 
     example = example_input() if example is None else example
 
+    allow_unicode_output()
+
     torch.onnx.export(
         model,
         example,
@@ -98,6 +150,23 @@ def export_onnx(model, path, example=None):
         },
         opset_version=ONNX_OPSET,
     )
+
+    # torch 2.9+ puts the weights in a sidecar and leaves the .onnx
+    # holding only the graph - a few dozen kB. Two files is a deployment
+    # hazard: copying the .onnx on its own ships a model with no weights
+    # in it, and nothing complains until inference. Fold them back into
+    # one file, which is what every runtime here expects to be handed.
+    extra = sidecars(path)
+
+    if extra:
+        onnx.save_model(
+            onnx.load(str(path)),
+            str(path),
+            save_as_external_data=False,
+        )
+
+        for item in extra:
+            item.unlink()
 
     return path
 

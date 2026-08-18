@@ -1,0 +1,716 @@
+<title>Railway Classifier Benchmarks</title>
+<style>
+:root {
+  color-scheme: light;
+  --ground:  #f2f4f0;
+  --surface: #fbfcfa;
+  --sunk:    #eceee8;
+  --ink:     #141a17;
+  --ink-2:   #4b5551;
+  --ink-3:   #7a847f;
+  --rule:    #dde1da;
+  --axis:    #c2c9bf;
+  --accent:  #8a4b1f;
+  --accent-soft: rgba(138,75,31,0.10);
+  --s1: #2a78d6;
+  --s2: #eb6834;
+  --s3: #1baf7a;
+  --good: #0ca30c;
+  --warn: #b0741a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground:  #101312;
+    --surface: #181c1a;
+    --sunk:    #1f2422;
+    --ink:     #eef2ee;
+    --ink-2:   #a9b3ae;
+    --ink-3:   #7f8a85;
+    --rule:    #2a302d;
+    --axis:    #3a423e;
+    --accent:  #cf8a55;
+    --accent-soft: rgba(207,138,85,0.14);
+    --s1: #3987e5;
+    --s2: #d95926;
+    --s3: #199e70;
+    --good: #0ca30c;
+    --warn: #d9a54a;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground:  #101312;
+  --surface: #181c1a;
+  --sunk:    #1f2422;
+  --ink:     #eef2ee;
+  --ink-2:   #a9b3ae;
+  --ink-3:   #7f8a85;
+  --rule:    #2a302d;
+  --axis:    #3a423e;
+  --accent:  #cf8a55;
+  --accent-soft: rgba(207,138,85,0.14);
+  --s1: #3987e5;
+  --s2: #d95926;
+  --s3: #199e70;
+  --good: #0ca30c;
+  --warn: #d9a54a;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono, .tick, .bar-value, .row-label, .panel-head, .note-in, .end-label,
+.eyebrow, table, .kpi-value, .kpi-unit, .machine, .stamp {
+  font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", Consolas,
+               "SF Mono", Menlo, monospace;
+  font-variant-ligatures: none;
+}
+
+.wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 28px 96px;
+}
+
+.masthead {
+  border-bottom: 1px solid var(--rule);
+  padding: 56px 0 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.stamp {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(30px, 4.6vw, 46px);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  font-weight: 680;
+  text-wrap: balance;
+  max-width: 20ch;
+}
+
+.standfirst {
+  margin: 0;
+  max-width: 66ch;
+  font-size: 17.5px;
+  color: var(--ink-2);
+}
+
+.machine {
+  font-size: 12px;
+  color: var(--ink-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  padding-top: 4px;
+}
+.machine b { color: var(--ink-2); font-weight: 600; }
+
+section { padding-top: 60px; }
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.eyebrow::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+.eyebrow em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: clamp(22px, 2.6vw, 27px);
+  letter-spacing: -0.018em;
+  font-weight: 660;
+  line-height: 1.18;
+  text-wrap: balance;
+}
+
+h3 {
+  margin: 34px 0 10px;
+  font-size: 16.5px;
+  letter-spacing: -0.008em;
+  font-weight: 640;
+}
+
+p { margin: 0 0 14px; max-width: 68ch; }
+p.lede { font-size: 17px; color: var(--ink-2); }
+
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+ul { max-width: 68ch; padding-left: 20px; margin: 0 0 14px; }
+li { margin-bottom: 8px; }
+
+strong { font-weight: 640; }
+code {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--sunk);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.figure {
+  margin: 22px 0 8px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 20px 20px 16px;
+}
+
+.figure-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.figure-title { font-size: 15px; font-weight: 640; }
+.figure-note { font-size: 12.5px; color: var(--ink-3); }
+
+.chart { width: 100%; height: auto; display: block; }
+
+.tick { font-size: 11.5px; fill: var(--ink-3); }
+.axis-title { font-size: 11.5px; fill: var(--ink-3); letter-spacing: 0.06em; }
+.bar-value { font-size: 11.5px; fill: var(--ink-2); }
+.row-label { font-size: 12.5px; fill: var(--ink-2); }
+.panel-head {
+  font-size: 11px;
+  fill: var(--ink-3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.note-in { font-size: 11px; fill: var(--ink-3); }
+.end-label { font-size: 12px; fill: var(--ink-2); }
+.muted-label { fill: var(--ink-3); }
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: 14px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.swatch {
+  width: 11px; height: 11px; border-radius: 2px; flex: none;
+}
+
+.scroll { overflow-x: auto; margin: 14px 0; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+caption {
+  text-align: left;
+  color: var(--ink-3);
+  font-size: 12.5px;
+  padding-bottom: 8px;
+}
+th, td {
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+thead th {
+  color: var(--ink-3);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  border-bottom-color: var(--axis);
+}
+tbody th { font-weight: 600; color: var(--ink); }
+tbody tr:last-child th, tbody tr:last-child td { border-bottom: none; }
+.a-right { text-align: right; }
+.a-left { text-align: left; }
+
+.twin { margin: 10px 0 0; }
+.twin summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--ink-3);
+  padding: 6px 0;
+  list-style: none;
+}
+.twin summary::-webkit-details-marker { display: none; }
+.twin summary::before { content: "+ "; color: var(--accent); }
+.twin[open] summary::before { content: "- "; }
+.twin summary:hover { color: var(--ink-2); }
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 22px 0;
+}
+.kpi { background: var(--surface); padding: 16px 18px; }
+.kpi-label {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-bottom: 6px;
+}
+.kpi-value {
+  font-size: 26px;
+  font-weight: 640;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.kpi-unit { font-size: 13px; color: var(--ink-3); font-weight: 400; }
+.kpi-note { font-size: 12.5px; color: var(--ink-3); margin-top: 6px; }
+
+.callout {
+  border-left: 2px solid var(--accent);
+  background: var(--accent-soft);
+  padding: 14px 18px;
+  margin: 22px 0;
+  border-radius: 0 4px 4px 0;
+}
+.callout p { margin: 0; max-width: 64ch; font-size: 15px; }
+.callout p + p { margin-top: 10px; }
+
+.defect {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+.defect h3 { margin: 0 0 8px; font-size: 15.5px; }
+.defect p { margin: 0 0 10px; font-size: 14.5px; }
+.defect p:last-child { margin-bottom: 0; }
+
+.tag {
+  display: inline-block;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  margin-bottom: 10px;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+.tag-bug { color: var(--accent); }
+.tag-gap { color: var(--ink-3); }
+.tag-fixed { color: var(--good); }
+
+footer {
+  margin-top: 72px;
+  padding-top: 22px;
+  border-top: 1px solid var(--rule);
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+@media (max-width: 640px) {
+  .wrap { padding: 0 18px 72px; }
+  .masthead { padding-top: 40px; }
+  section { padding-top: 46px; }
+  .figure { padding: 16px 14px 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+<div class="wrap">
+  <header class="masthead">
+    <div class="stamp">ZRA Labs 2026 &middot; measurement record</div>
+    <h1>What the railway classifier costs to run</h1>
+    <p class="standfirst">Timing, size and correctness measurements across the
+    model, the scan, the device store and the REST layer &mdash; gathered as
+    source material for the whitepaper, and reproducible from
+    <code>statistics/bench.py</code>.</p>
+    <div class="machine"><span><b>CPU</b> AMD, 6 threads</span><span><b>OS</b> Windows 11</span><span><b>Python</b> 3.12.7</span><span><b>Torch</b> 2.13.0+cpu</span><span><b>GPU</b> none</span><span><b>Runtimes</b> torch, onnx</span><span><b>Run</b> 2026-08-17</span></div>
+  </header>
+  
+<section id="summary">
+  <div class="eyebrow">Summary <em>all suites</em></div>
+  <h2>What the measurements say</h2>
+  <p class="lede">Five findings carry most of the weight. Each is measured
+  below, and each comes from a suite that can be re-run.</p>
+  <ul>
+    <li><strong>Model size does not predict model speed.</strong> Across the six
+    backbones, parameter count spans 32x and measured latency spans 6.8x, and the
+    two do not rank in the same order.</li>
+    <li><strong>A scan costs its window count, not its resolution.</strong> Every
+    crop is resized to 224 before the model sees it, so a 12-megapixel drone
+    still and a VGA frame of the same shape cost the same to scan.</li>
+    <li><strong>ONNX Runtime is about twice PyTorch's speed on identical
+    weights</strong>, agreeing to 1.9e-06 on the logits.</li>
+    <li><strong>Threads stop paying early.</strong> Six threads return 3.6x, not
+    6x; parallel efficiency falls from 86% to 60%.</li>
+    <li><strong>The thumbnail is the storage budget.</strong> Metadata is 57
+    bytes per capture on the wire, an image is 9,310 - a factor of 163.</li>
+  </ul>
+</section>
+<section id="training">
+  <div class="eyebrow">Training <em>training / checkpoint</em></div>
+  <h2>Two phases, and where the overfitting enters</h2>
+  <p class="lede">The run trains in two phases: fifteen epochs with the
+  backbone frozen, then ten with the last block unfrozen at a tenth of the
+  learning rate. The curves separate sharply at the boundary.</p>
+
+  <figure class="figure"><div class="figure-head"><span class="figure-title">Accuracy per epoch</span><span class="figure-note">resnet18, seed 42, 25 epochs</span></div><svg viewBox="0 0 740 320" role="img" aria-label="Training and validation accuracy across 25 epochs" class="chart"><line x1="46" y1="276.0" x2="598" y2="276.0" stroke="var(--rule)" stroke-width="1"/><text x="36.0" y="280.0" text-anchor="end" class="tick">25%</text><line x1="46" y1="224.4" x2="598" y2="224.4" stroke="var(--rule)" stroke-width="1"/><text x="36.0" y="228.4" text-anchor="end" class="tick">40%</text><line x1="46" y1="155.6" x2="598" y2="155.6" stroke="var(--rule)" stroke-width="1"/><text x="36.0" y="159.6" text-anchor="end" class="tick">60%</text><line x1="46" y1="86.8" x2="598" y2="86.8" stroke="var(--rule)" stroke-width="1"/><text x="36.0" y="90.8" text-anchor="end" class="tick">80%</text><line x1="46" y1="18.0" x2="598" y2="18.0" stroke="var(--rule)" stroke-width="1"/><text x="36.0" y="22.0" text-anchor="end" class="tick">100%</text><line x1="391.0" y1="18" x2="391.0" y2="276" stroke="var(--accent)" stroke-width="1"/><text x="398.0" y="32" class="note-in" text-anchor="start">fine-tuning</text><text x="384.0" y="32" class="note-in" text-anchor="end">head only</text><text x="46.0" y="300.0" text-anchor="middle" class="tick">1</text><text x="138.0" y="300.0" text-anchor="middle" class="tick">5</text><text x="253.0" y="300.0" text-anchor="middle" class="tick">10</text><text x="368.0" y="300.0" text-anchor="middle" class="tick">15</text><text x="483.0" y="300.0" text-anchor="middle" class="tick">20</text><text x="598.0" y="300.0" text-anchor="middle" class="tick">25</text><text x="322.0" y="316.0" text-anchor="middle" class="axis-title">epoch</text><path d="M46.00 233.52 L69.00 162.96 L92.00 138.74 L115.00 131.38 L138.00 126.46 L161.00 113.84 L184.00 115.25 L207.00 110.67 L230.00 108.58 L253.00 109.26 L276.00 112.43 L299.00 103.31 L322.00 111.71 L345.00 107.16 L368.00 105.07 L391.00 98.05 L414.00 49.24 L437.00 38.02 L460.00 31.35 L483.00 27.49 L506.00 27.12 L529.00 24.33 L552.00 25.71 L575.00 22.20 L598.00 21.85" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="598.0" cy="21.9" r="4" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/><path d="M46.00 257.32 L69.00 190.00 L92.00 160.07 L115.00 152.61 L138.00 152.61 L161.00 145.14 L184.00 141.39 L207.00 145.14 L230.00 141.39 L253.00 137.64 L276.00 133.93 L299.00 145.14 L322.00 130.18 L345.00 133.93 L368.00 137.64 L391.00 122.68 L414.00 96.54 L437.00 104.00 L460.00 107.75 L483.00 107.75 L506.00 107.75 L529.00 96.54 L552.00 92.79 L575.00 100.25 L598.00 100.25" fill="none" stroke="var(--s2)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="598.0" cy="100.3" r="4" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"/><text x="610.0" y="25.9" class="end-label" text-anchor="start">training 98.9%</text><text x="610.0" y="104.3" class="end-label" text-anchor="start">validation 76.1%</text><circle cx="552.0" cy="92.8" r="6" fill="none" stroke="var(--ink-2)" stroke-width="1.5"/><text x="552.0" y="76.8" class="note-in" text-anchor="middle">weights kept: 78.3%</text></svg><div class="legend"><span><i class="swatch" style="background:var(--s1)"></i>training</span><span><i class="swatch" style="background:var(--s2)"></i>validation</span></div><details class="twin"><summary>Per-epoch figures (25 rows)</summary><div class="scroll"><table><thead><tr><th scope="col" class="a-right">epoch</th><th scope="col" class="a-left">phase</th><th scope="col" class="a-right">train loss</th><th scope="col" class="a-right">train acc</th><th scope="col" class="a-right">val loss</th><th scope="col" class="a-right">val acc</th><th scope="col" class="a-right">gap</th></tr></thead><tbody><tr><th scope="row" class="a-right">1</th><td class="a-left">head only</td><td class="a-right">1.6348</td><td class="a-right">0.3735</td><td class="a-right">1.6539</td><td class="a-right">0.3043</td><td class="a-right">+0.0692</td></tr><tr><th scope="row" class="a-right">2</th><td class="a-left">head only</td><td class="a-right">1.2775</td><td class="a-right">0.5786</td><td class="a-right">1.4819</td><td class="a-right">0.5000</td><td class="a-right">+0.0786</td></tr><tr><th scope="row" class="a-right">3</th><td class="a-left">head only</td><td class="a-right">1.1539</td><td class="a-right">0.6490</td><td class="a-right">1.2456</td><td class="a-right">0.5870</td><td class="a-right">+0.0620</td></tr><tr><th scope="row" class="a-right">4</th><td class="a-left">head only</td><td class="a-right">1.1141</td><td class="a-right">0.6704</td><td class="a-right">1.2219</td><td class="a-right">0.6087</td><td class="a-right">+0.0617</td></tr><tr><th scope="row" class="a-right">5</th><td class="a-left">head only</td><td class="a-right">1.0953</td><td class="a-right">0.6847</td><td class="a-right">1.2245</td><td class="a-right">0.6087</td><td class="a-right">+0.0760</td></tr><tr><th scope="row" class="a-right">6</th><td class="a-left">head only</td><td class="a-right">1.0449</td><td class="a-right">0.7214</td><td class="a-right">1.2622</td><td class="a-right">0.6304</td><td class="a-right">+0.0910</td></tr><tr><th scope="row" class="a-right">7</th><td class="a-left">head only</td><td class="a-right">1.0423</td><td class="a-right">0.7173</td><td class="a-right">1.1485</td><td class="a-right">0.6413</td><td class="a-right">+0.0760</td></tr><tr><th scope="row" class="a-right">8</th><td class="a-left">head only</td><td class="a-right">1.0188</td><td class="a-right">0.7306</td><td class="a-right">1.1626</td><td class="a-right">0.6304</td><td class="a-right">+0.1002</td></tr><tr><th scope="row" class="a-right">9</th><td class="a-left">head only</td><td class="a-right">1.0036</td><td class="a-right">0.7367</td><td class="a-right">1.1306</td><td class="a-right">0.6413</td><td class="a-right">+0.0954</td></tr><tr><th scope="row" class="a-right">10</th><td class="a-left">head only</td><td class="a-right">0.9922</td><td class="a-right">0.7347</td><td class="a-right">1.1152</td><td class="a-right">0.6522</td><td class="a-right">+0.0825</td></tr><tr><th scope="row" class="a-right">11</th><td class="a-left">head only</td><td class="a-right">0.9833</td><td class="a-right">0.7255</td><td class="a-right">1.1191</td><td class="a-right">0.6630</td><td class="a-right">+0.0625</td></tr><tr><th scope="row" class="a-right">12</th><td class="a-left">head only</td><td class="a-right">0.9702</td><td class="a-right">0.7520</td><td class="a-right">1.1354</td><td class="a-right">0.6304</td><td class="a-right">+0.1216</td></tr><tr><th scope="row" class="a-right">13</th><td class="a-left">head only</td><td class="a-right">0.9937</td><td class="a-right">0.7276</td><td class="a-right">1.1455</td><td class="a-right">0.6739</td><td class="a-right">+0.0537</td></tr><tr><th scope="row" class="a-right">14</th><td class="a-left">head only</td><td class="a-right">0.9739</td><td class="a-right">0.7408</td><td class="a-right">1.1361</td><td class="a-right">0.6630</td><td class="a-right">+0.0778</td></tr><tr><th scope="row" class="a-right">15</th><td class="a-left">head only</td><td class="a-right">0.9729</td><td class="a-right">0.7469</td><td class="a-right">1.1354</td><td class="a-right">0.6522</td><td class="a-right">+0.0947</td></tr><tr><th scope="row" class="a-right">16</th><td class="a-left">fine-tuning</td><td class="a-right">0.9275</td><td class="a-right">0.7673</td><td class="a-right">1.1206</td><td class="a-right">0.6957</td><td class="a-right">+0.0716</td></tr><tr><th scope="row" class="a-right">17</th><td class="a-left">fine-tuning</td><td class="a-right">0.6941</td><td class="a-right">0.9092</td><td class="a-right">1.0617</td><td class="a-right">0.7717</td><td class="a-right">+0.1375</td></tr><tr><th scope="row" class="a-right">18</th><td class="a-left">fine-tuning</td><td class="a-right">0.6244</td><td class="a-right">0.9418</td><td class="a-right">1.0990</td><td class="a-right">0.7500</td><td class="a-right">+0.1918</td></tr><tr><th scope="row" class="a-right">19</th><td class="a-left">fine-tuning</td><td class="a-right">0.5786</td><td class="a-right">0.9612</td><td class="a-right">1.0228</td><td class="a-right">0.7391</td><td class="a-right">+0.2221</td></tr><tr><th scope="row" class="a-right">20</th><td class="a-left">fine-tuning</td><td class="a-right">0.5654</td><td class="a-right">0.9724</td><td class="a-right">1.0325</td><td class="a-right">0.7391</td><td class="a-right">+0.2333</td></tr><tr><th scope="row" class="a-right">21</th><td class="a-left">fine-tuning</td><td class="a-right">0.5551</td><td class="a-right">0.9735</td><td class="a-right">1.0168</td><td class="a-right">0.7391</td><td class="a-right">+0.2344</td></tr><tr><th scope="row" class="a-right">22</th><td class="a-left">fine-tuning</td><td class="a-right">0.5437</td><td class="a-right">0.9816</td><td class="a-right">1.0176</td><td class="a-right">0.7717</td><td class="a-right">+0.2099</td></tr><tr><th scope="row" class="a-right">23</th><td class="a-left">fine-tuning</td><td class="a-right">0.5356</td><td class="a-right">0.9776</td><td class="a-right">1.0076</td><td class="a-right">0.7826</td><td class="a-right">+0.1950</td></tr><tr><th scope="row" class="a-right">24</th><td class="a-left">fine-tuning</td><td class="a-right">0.5252</td><td class="a-right">0.9878</td><td class="a-right">1.0190</td><td class="a-right">0.7609</td><td class="a-right">+0.2269</td></tr><tr><th scope="row" class="a-right">25</th><td class="a-left">fine-tuning</td><td class="a-right">0.5203</td><td class="a-right">0.9888</td><td class="a-right">1.0289</td><td class="a-right">0.7609</td><td class="a-right">+0.2279</td></tr></tbody></table></div></details></figure>
+
+  <p>Phase one plateaus: validation accuracy sits around 65% from epoch 6
+  onward and the train/validation gap stays under 12 points. Unfreezing changes
+  both at once. Within two epochs validation jumps from 69.6% to 77.2% and
+  training accuracy climbs from 76.7% to 90.9%; by the end training reaches
+  98.9% while validation has stopped moving at 76.1%.</p>
+
+  <p>So the fine-tuning phase bought roughly <strong>13 points of validation
+  accuracy and all of the overfitting</strong>. The final gap is 22.8 points.
+  Validation loss bottoms at epoch 23 and rises afterwards, which is why the
+  saved weights are that epoch's rather than the last one's.</p>
+
+  <div class="kpis"><div class="kpi"><div class="kpi-label">Best validation</div><div class="kpi-value">78.3 <span class="kpi-unit">%</span></div><div class="kpi-note">epoch 23, the weights that were kept</div></div><div class="kpi"><div class="kpi-label">Training at that epoch</div><div class="kpi-value">97.8 <span class="kpi-unit">%</span></div><div class="kpi-note">a 19-point gap already</div></div><div class="kpi"><div class="kpi-label">Held-out test accuracy</div><div class="kpi-value">70.7 <span class="kpi-unit">%</span></div><div class="kpi-note">chance is 16.7% across six classes</div></div><div class="kpi"><div class="kpi-label">Final train/val gap</div><div class="kpi-value">22.8 <span class="kpi-unit">pts</span></div><div class="kpi-note">up from 7 points before fine-tuning</div></div></div>
+
+  <div class="callout">
+    <p>The test figure in the checkpoint is <strong>70.71%</strong>. The model
+    README quotes 70.4% (38 of 54) alongside a per-class table. The two do not
+    come from the same run, so a whitepaper should cite one run and say which -
+    they are close enough to look like a rounding difference and are not one.</p>
+  </div>
+</section>
+<section id="backbones">
+  <div class="eyebrow">Backbones <em>backbones</em></div>
+  <h2>Parameters are the wrong axis</h2>
+  <p class="lede">Six architectures are selectable with <code>--arch</code>.
+  Ordering them by size and by speed produces two different orders, and only one
+  of them is the one that matters when picking hardware.</p>
+
+  <figure class="figure"><div class="figure-head"><span class="figure-title">Size against measured cost</span><span class="figure-note">batch of 32, mean of three runs, rows ordered by parameter count</span></div><svg viewBox="0 0 760 268" role="img" aria-label="Backbone parameter count against measured latency" class="chart"><text x="164" y="22" class="panel-head">parameters</text><text x="474" y="22" class="panel-head">milliseconds per image</text><line x1="164" y1="34" x2="336" y2="34" stroke="var(--rule)" stroke-width="1"/><line x1="474" y1="34" x2="646" y2="34" stroke="var(--rule)" stroke-width="1"/><text x="152" y="64.5" text-anchor="end" class="row-label">resnet18</text><rect x="164" y="54" width="172.0" height="13" rx="3" fill="var(--s1)"/><text x="344.0" y="64.5" class="bar-value">11.18M</text><rect x="474" y="54" width="172.0" height="13" rx="3" fill="var(--s2)"/><text x="654.0" y="64.5" class="bar-value">47.3</text><text x="152" y="98.5" text-anchor="end" class="row-label">mobilenet_v3_large</text><rect x="164" y="88" width="64.8" height="13" rx="3" fill="var(--s1)"/><text x="236.8" y="98.5" class="bar-value">4.21M</text><rect x="474" y="88" width="100.4" height="13" rx="3" fill="var(--s2)"/><text x="582.4" y="98.5" class="bar-value">27.6</text><text x="152" y="132.5" text-anchor="end" class="row-label">efficientnet_b0</text><rect x="164" y="122" width="61.8" height="13" rx="3" fill="var(--s1)"/><text x="233.8" y="132.5" class="bar-value">4.02M</text><rect x="474" y="122" width="159.8" height="13" rx="3" fill="var(--s2)"/><text x="641.8" y="132.5" class="bar-value">43.9</text><text x="152" y="166.5" text-anchor="end" class="row-label">mobilenet_v3_small</text><rect x="164" y="156" width="23.4" height="13" rx="3" fill="var(--s1)"/><text x="195.4" y="166.5" class="bar-value">1.52M</text><rect x="474" y="156" width="29.5" height="13" rx="3" fill="var(--s2)"/><text x="511.5" y="166.5" class="bar-value">8.1</text><text x="152" y="200.5" text-anchor="end" class="row-label">squeezenet1_1</text><rect x="164" y="190" width="11.2" height="13" rx="3" fill="var(--s1)"/><text x="183.2" y="200.5" class="bar-value">0.73M</text><rect x="474" y="190" width="95.8" height="13" rx="3" fill="var(--s2)"/><text x="577.8" y="200.5" class="bar-value">26.3</text><text x="152" y="234.5" text-anchor="end" class="row-label">shufflenet_v2_x0_5</text><rect x="164" y="224" width="5.4" height="13" rx="3" fill="var(--s1)"/><text x="177.4" y="234.5" class="bar-value">0.35M</text><rect x="474" y="224" width="25.5" height="13" rx="3" fill="var(--s2)"/><text x="507.5" y="234.5" class="bar-value">7.0</text></svg><div class="legend"><span><i class="swatch" style="background:var(--s1)"></i>parameters</span><span><i class="swatch" style="background:var(--s2)"></i>milliseconds per image</span></div><details class="twin"><summary>Backbone figures</summary><div class="scroll"><table><thead><tr><th scope="col" class="a-left">architecture</th><th scope="col" class="a-right">parameters</th><th scope="col" class="a-right">x smaller</th><th scope="col" class="a-right">ms/image</th><th scope="col" class="a-right">x faster</th><th scope="col" class="a-right">spread</th><th scope="col" class="a-right">TorchScript MB</th></tr></thead><tbody><tr><th scope="row" class="a-left"><code>resnet18</code></th><td class="a-right">11,179,590</td><td class="a-right">1.0x</td><td class="a-right">47.3</td><td class="a-right">1.00x</td><td class="a-right">6.1%</td><td class="a-right">42.8</td></tr><tr><th scope="row" class="a-left"><code>mobilenet_v3_large</code></th><td class="a-right">4,209,718</td><td class="a-right">2.7x</td><td class="a-right">27.6</td><td class="a-right">1.75x</td><td class="a-right">15.3%</td><td class="a-right">16.6</td></tr><tr><th scope="row" class="a-left"><code>efficientnet_b0</code></th><td class="a-right">4,015,234</td><td class="a-right">2.8x</td><td class="a-right">43.9</td><td class="a-right">1.09x</td><td class="a-right">13.1%</td><td class="a-right">16.0</td></tr><tr><th scope="row" class="a-left"><code>mobilenet_v3_small</code></th><td class="a-right">1,524,006</td><td class="a-right">7.3x</td><td class="a-right">8.1</td><td class="a-right">5.89x</td><td class="a-right">11.5%</td><td class="a-right">6.2</td></tr><tr><th scope="row" class="a-left"><code>squeezenet1_1</code></th><td class="a-right">725,574</td><td class="a-right">15.4x</td><td class="a-right">26.3</td><td class="a-right">1.80x</td><td class="a-right">8.5%</td><td class="a-right">2.9</td></tr><tr><th scope="row" class="a-left"><code>shufflenet_v2_x0_5</code></th><td class="a-right">347,942</td><td class="a-right">32.1x</td><td class="a-right">7.0</td><td class="a-right">6.73x</td><td class="a-right">5.3%</td><td class="a-right">1.8</td></tr></tbody></table></div></details></figure>
+
+  <p>The left column descends cleanly; the right column does not follow it.
+  <code>squeezenet1_1</code> holds half the parameters of
+  <code>mobilenet_v3_small</code> and takes <strong>three times as long per
+  image</strong>. <code>efficientnet_b0</code> is a third of the ResNet's size
+  and is not meaningfully faster than it - 1.09x, inside the run-to-run
+  spread.</p>
+
+  <p>The reason is that these are convolutional networks whose cost is the
+  feature maps rather than the weights. SqueezeNet holds full spatial resolution
+  much longer than the MobileNets do, so it moves far more activation data for
+  far fewer parameters. Parameter count measures what a model weighs on disk;
+  it is not a proxy for what it costs to run.</p>
+
+  <div class="callout">
+    <p>Absolute latency moved 5-15% between three runs on this machine. The
+    <em>ratio</em> between two backbones is the stable quantity:
+    <code>shufflenet_v2_x0_5</code> against <code>resnet18</code> held between
+    6.55x and 6.89x across all three. Quote ratios, and treat any gap under
+    about 15% as noise.</p>
+  </div>
+</section>
+<section id="scan">
+  <div class="eyebrow">Scan cost <em>windows / profiles</em></div>
+  <h2>The frame's shape sets the cost, not its size</h2>
+  <p class="lede">The network classifies whole images, so finding objects means
+  sweeping a grid of overlapping square crops and merging the ones that agree.
+  The grid is the entire cost of a scan.</p>
+
+  <p>Window size is a fraction of the frame's <em>short edge</em>, so the count
+  depends on aspect ratio and not on resolution at all. A 4:3 photograph is 69
+  windows on the <code>full</code> profile whether it is 640x480 or 4000x3000.
+  A 16:9 frame is 89. A square one is 49.</p>
+
+  <div class="scroll"><table><caption>Windows per scan. Computed from the grid, so these hold on any machine.</caption><thead><tr><th scope="col" class="a-left">frame</th><th scope="col" class="a-right">pixels</th><th scope="col" class="a-right">aspect</th><th scope="col" class="a-right">MP</th><th scope="col" class="a-right">full</th><th scope="col" class="a-right">balanced</th><th scope="col" class="a-right">edge</th></tr></thead><tbody><tr><th scope="row" class="a-left">VGA</th><td class="a-right">640x480</td><td class="a-right">1.33</td><td class="a-right">0.31</td><td class="a-right">69</td><td class="a-right">29</td><td class="a-right">6</td></tr><tr><th scope="row" class="a-left">phone</th><td class="a-right">1280x960</td><td class="a-right">1.33</td><td class="a-right">1.23</td><td class="a-right">69</td><td class="a-right">29</td><td class="a-right">6</td></tr><tr><th scope="row" class="a-left">1080p</th><td class="a-right">1920x1080</td><td class="a-right">1.78</td><td class="a-right">2.07</td><td class="a-right">89</td><td class="a-right">43</td><td class="a-right">8</td></tr><tr><th scope="row" class="a-left">square</th><td class="a-right">1000x1000</td><td class="a-right">1.00</td><td class="a-right">1.00</td><td class="a-right">49</td><td class="a-right">25</td><td class="a-right">4</td></tr><tr><th scope="row" class="a-left">drone still</th><td class="a-right">4000x3000</td><td class="a-right">1.33</td><td class="a-right">12.00</td><td class="a-right">69</td><td class="a-right">29</td><td class="a-right">6</td></tr></tbody></table></div>
+
+  <figure class="figure"><div class="figure-head"><span class="figure-title">Scan latency by profile</span><span class="figure-note">resnet18 on CPU, fastest of repeated runs, window count on each bar</span></div><svg viewBox="0 0 740 330" role="img" aria-label="Scan latency by profile and frame size" class="chart"><line x1="60" y1="276.0" x2="720" y2="276.0" stroke="var(--rule)" stroke-width="1"/><text x="50.0" y="280.0" text-anchor="end" class="tick">0</text><line x1="60" y1="225.2" x2="720" y2="225.2" stroke="var(--rule)" stroke-width="1"/><text x="50.0" y="229.2" text-anchor="end" class="tick">1,000</text><line x1="60" y1="174.4" x2="720" y2="174.4" stroke="var(--rule)" stroke-width="1"/><text x="50.0" y="178.4" text-anchor="end" class="tick">2,000</text><line x1="60" y1="123.6" x2="720" y2="123.6" stroke="var(--rule)" stroke-width="1"/><text x="50.0" y="127.6" text-anchor="end" class="tick">3,000</text><line x1="60" y1="72.8" x2="720" y2="72.8" stroke="var(--rule)" stroke-width="1"/><text x="50.0" y="76.8" text-anchor="end" class="tick">4,000</text><line x1="60" y1="22.0" x2="720" y2="22.0" stroke="var(--rule)" stroke-width="1"/><text x="50.0" y="26.0" text-anchor="end" class="tick">5,000</text><text x="16" y="149.0" class="axis-title" text-anchor="middle" transform="rotate(-90 16 149.0)">milliseconds</text><rect x="92.0" y="41.4" width="44" height="234.6" rx="3" fill="var(--s1)"/><text x="114.0" y="33.4" class="bar-value" text-anchor="middle">69w</text><rect x="148.0" y="198.5" width="44" height="77.5" rx="3" fill="var(--s2)"/><text x="170.0" y="190.5" class="bar-value" text-anchor="middle">29w</text><rect x="204.0" y="259.7" width="44" height="16.3" rx="3" fill="var(--s3)"/><text x="226.0" y="251.7" class="bar-value" text-anchor="middle">6w</text><text x="170.0" y="302.0" text-anchor="middle" class="tick">VGA</text><rect x="312.0" y="87.9" width="44" height="188.1" rx="3" fill="var(--s1)"/><text x="334.0" y="79.9" class="bar-value" text-anchor="middle">69w</text><rect x="368.0" y="189.5" width="44" height="86.5" rx="3" fill="var(--s2)"/><text x="390.0" y="181.5" class="bar-value" text-anchor="middle">29w</text><rect x="424.0" y="258.7" width="44" height="17.3" rx="3" fill="var(--s3)"/><text x="446.0" y="250.7" class="bar-value" text-anchor="middle">6w</text><text x="390.0" y="302.0" text-anchor="middle" class="tick">phone</text><rect x="532.0" y="29.7" width="44" height="246.3" rx="3" fill="var(--s1)"/><text x="554.0" y="21.7" class="bar-value" text-anchor="middle">89w</text><rect x="588.0" y="150.9" width="44" height="125.1" rx="3" fill="var(--s2)"/><text x="610.0" y="142.9" class="bar-value" text-anchor="middle">43w</text><rect x="644.0" y="252.3" width="44" height="23.7" rx="3" fill="var(--s3)"/><text x="666.0" y="244.3" class="bar-value" text-anchor="middle">8w</text><text x="610.0" y="302.0" text-anchor="middle" class="tick">1080p</text><line x1="60" y1="276.0" x2="720" y2="276.0" stroke="var(--axis)" stroke-width="1"/></svg><div class="legend"><span><i class="swatch" style="background:var(--s1)"></i>full</span><span><i class="swatch" style="background:var(--s2)"></i>balanced</span><span><i class="swatch" style="background:var(--s3)"></i>edge</span></div><details class="twin"><summary>Scan figures</summary><div class="scroll"><table><thead><tr><th scope="col" class="a-left">frame</th><th scope="col" class="a-left">profile</th><th scope="col" class="a-right">windows</th><th scope="col" class="a-right">ms</th><th scope="col" class="a-right">ms/window</th><th scope="col" class="a-right">scans/sec</th></tr></thead><tbody><tr><th scope="row" class="a-left">VGA</th><td class="a-left">balanced</td><td class="a-right">29</td><td class="a-right">1,526</td><td class="a-right">52.6</td><td class="a-right">0.66</td></tr><tr><th scope="row" class="a-left">VGA</th><td class="a-left">edge</td><td class="a-right">6</td><td class="a-right">322</td><td class="a-right">53.6</td><td class="a-right">3.11</td></tr><tr><th scope="row" class="a-left">VGA</th><td class="a-left">full</td><td class="a-right">69</td><td class="a-right">4,617</td><td class="a-right">66.9</td><td class="a-right">0.22</td></tr><tr><th scope="row" class="a-left">phone</th><td class="a-left">balanced</td><td class="a-right">29</td><td class="a-right">1,702</td><td class="a-right">58.7</td><td class="a-right">0.59</td></tr><tr><th scope="row" class="a-left">phone</th><td class="a-left">edge</td><td class="a-right">6</td><td class="a-right">341</td><td class="a-right">56.9</td><td class="a-right">2.93</td></tr><tr><th scope="row" class="a-left">phone</th><td class="a-left">full</td><td class="a-right">69</td><td class="a-right">3,702</td><td class="a-right">53.6</td><td class="a-right">0.27</td></tr><tr><th scope="row" class="a-left">1080p</th><td class="a-left">balanced</td><td class="a-right">43</td><td class="a-right">2,463</td><td class="a-right">57.3</td><td class="a-right">0.41</td></tr><tr><th scope="row" class="a-left">1080p</th><td class="a-left">edge</td><td class="a-right">8</td><td class="a-right">466</td><td class="a-right">58.3</td><td class="a-right">2.15</td></tr><tr><th scope="row" class="a-left">1080p</th><td class="a-left">full</td><td class="a-right">89</td><td class="a-right">4,848</td><td class="a-right">54.5</td><td class="a-right">0.21</td></tr></tbody></table></div></details></figure>
+
+  <p>Time per window is nearly constant across every profile and every frame
+  size measured - between 52 and 67 milliseconds, with no trend against
+  resolution. That gives a usable planning rule:</p>
+
+  <div class="kpis"><div class="kpi"><div class="kpi-label">Cost model</div><div class="kpi-value">~57 <span class="kpi-unit">ms x windows</span></div><div class="kpi-note">on this CPU, for any frame shape</div></div><div class="kpi"><div class="kpi-label">full profile</div><div class="kpi-value">3.7 <span class="kpi-unit">sec</span></div><div class="kpi-note">69 windows on a 4:3 frame</div></div><div class="kpi"><div class="kpi-label">edge profile</div><div class="kpi-value">0.34 <span class="kpi-unit">sec</span></div><div class="kpi-note">6 windows, about 3 scans a second</div></div><div class="kpi"><div class="kpi-label">edge vs full</div><div class="kpi-value">10.8 <span class="kpi-unit">x faster</span></div><div class="kpi-note">for 11.5x fewer windows</div></div></div>
+
+  <p>The <code>edge</code> profile is close to linear in what it removes, which
+  is the honest way to read it: it is not cheaper per window, it simply looks at
+  fewer of them, and it trades recall for that.</p>
+</section>
+<section id="runtime">
+  <div class="eyebrow">Runtimes <em>runtimes / threads</em></div>
+  <h2>Where the speed actually is</h2>
+  <p class="lede">The same weights run through a different runtime, and through
+  a different number of cores. One of these is worth far more than the other.</p>
+
+  <div class="kpis"><div class="kpi"><div class="kpi-label">ONNX vs PyTorch</div><div class="kpi-value">2.0 <span class="kpi-unit">x faster</span></div><div class="kpi-note">batch of 8, identical weights</div></div><div class="kpi"><div class="kpi-label">Logit agreement</div><div class="kpi-value">1.9e-06 <span class="kpi-unit">max diff</span></div><div class="kpi-note">float32 rounding, not a different model</div></div><div class="kpi"><div class="kpi-label">Checkpoint on disk</div><div class="kpi-value">42.7 <span class="kpi-unit">MB</span></div><div class="kpi-note">resnet18 with a 6-class head</div></div><div class="kpi"><div class="kpi-label">Cold start</div><div class="kpi-value">0.40 <span class="kpi-unit">sec</span></div><div class="kpi-note">build the classifier and load weights</div></div></div>
+
+  <p>Exporting to ONNX is the cheapest real speedup available here: no retraining,
+  no accuracy change, and the outputs agree to within float32 rounding. The
+  <code>runtimes</code> suite checks that agreement on every run, because a
+  backend that is fast and quietly wrong is worse than no backend.</p>
+
+  <p>The export is a single 44.8 MB file - the same size as the checkpoint it
+  came from, since both hold the same float32 weights. It was two files until
+  the defect below was fixed.</p>
+
+  <figure class="figure"><div class="figure-head"><span class="figure-title">Speedup against thread count</span><span class="figure-note">resnet18, batch of 8, against perfectly linear scaling</span></div><svg viewBox="0 0 600 300" role="img" aria-label="Speedup against thread count, measured versus linear" class="chart"><line x1="46" y1="250.0" x2="484" y2="250.0" stroke="var(--rule)" stroke-width="1"/><text x="36.0" y="254.0" text-anchor="end" class="tick">1x</text><line x1="46" y1="203.6" x2="484" y2="203.6" stroke="var(--rule)" stroke-width="1"/><text x="36.0" y="207.6" text-anchor="end" class="tick">2x</text><line x1="46" y1="157.2" x2="484" y2="157.2" stroke="var(--rule)" stroke-width="1"/><text x="36.0" y="161.2" text-anchor="end" class="tick">3x</text><line x1="46" y1="110.8" x2="484" y2="110.8" stroke="var(--rule)" stroke-width="1"/><text x="36.0" y="114.8" text-anchor="end" class="tick">4x</text><line x1="46" y1="64.4" x2="484" y2="64.4" stroke="var(--rule)" stroke-width="1"/><text x="36.0" y="68.4" text-anchor="end" class="tick">5x</text><line x1="46" y1="18.0" x2="484" y2="18.0" stroke="var(--rule)" stroke-width="1"/><text x="36.0" y="22.0" text-anchor="end" class="tick">6x</text><text x="46.0" y="274.0" text-anchor="middle" class="tick">1</text><text x="133.6" y="274.0" text-anchor="middle" class="tick">2</text><text x="308.8" y="274.0" text-anchor="middle" class="tick">4</text><text x="484.0" y="274.0" text-anchor="middle" class="tick">6</text><text x="265.0" y="292.0" text-anchor="middle" class="axis-title">threads</text><path d="M46.00 250.00 L484.00 18.00" fill="none" stroke="var(--ink-3)" stroke-width="2" stroke-linecap="round"/><text x="494.0" y="22.0" class="end-label muted-label" text-anchor="start">linear</text><path d="M46.00 250.00 L133.60 216.59 L308.80 176.22 L484.00 130.75" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="46.0" cy="250.0" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/><circle cx="133.6" cy="216.6" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/><circle cx="308.8" cy="176.2" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/><circle cx="484.0" cy="130.8" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/><text x="494.0" y="134.8" class="end-label" text-anchor="start">measured 3.6x</text></svg><div class="legend"><span><i class="swatch" style="background:var(--s1)"></i>measured</span></div><details class="twin"><summary>Thread figures</summary><div class="scroll"><table><thead><tr><th scope="col" class="a-right">threads</th><th scope="col" class="a-right">ms / 8 images</th><th scope="col" class="a-right">ms/image</th><th scope="col" class="a-right">speedup</th><th scope="col" class="a-right">efficiency</th></tr></thead><tbody><tr><th scope="row" class="a-right">1</th><td class="a-right">1,527.9</td><td class="a-right">191.0</td><td class="a-right">1.00x</td><td class="a-right">100.0%</td></tr><tr><th scope="row" class="a-right">2</th><td class="a-right">888.5</td><td class="a-right">111.1</td><td class="a-right">1.72x</td><td class="a-right">86.0%</td></tr><tr><th scope="row" class="a-right">4</th><td class="a-right">590.4</td><td class="a-right">73.8</td><td class="a-right">2.59x</td><td class="a-right">64.7%</td></tr><tr><th scope="row" class="a-right">6</th><td class="a-right">428.0</td><td class="a-right">53.5</td><td class="a-right">3.57x</td><td class="a-right">59.5%</td></tr></tbody></table></div></details></figure>
+
+  <p>Cores pay less the more of them there are. Two threads return 1.72x - 86%
+  efficient. Six return 3.57x, which is 60%. Extrapolating the shape rather than
+  the numbers, <strong>a four-core single-board computer should expect roughly
+  2.6x out of its four cores</strong>, and its cores are slower per clock than
+  these to begin with.</p>
+
+  <p>Single-threaded, the ResNet takes about 191 ms per image. That figure, not
+  the six-thread one, is the right starting point for estimating a small
+  board.</p>
+</section>
+<section id="device">
+  <div class="eyebrow">On the device <em>store / sync</em></div>
+  <h2>What a capture costs to keep and to send</h2>
+  <p class="lede">A device records locally and uploads when a network appears.
+  The full photograph is never kept - only a 640-pixel thumbnail and the boxes -
+  so the thumbnail sets both the storage and the bandwidth budget.</p>
+
+  <div class="kpis"><div class="kpi"><div class="kpi-label">Thumbnail</div><div class="kpi-value">10,375 <span class="kpi-unit">bytes</span></div><div class="kpi-note">photo-like frame at 640px, quality 70</div></div><div class="kpi"><div class="kpi-label">Database row</div><div class="kpi-value">588 <span class="kpi-unit">bytes</span></div><div class="kpi-note">capture plus two detections</div></div><div class="kpi"><div class="kpi-label">Captures per GB</div><div class="kpi-value">97,942</div><div class="kpi-note">thumbnails and database together</div></div><div class="kpi"><div class="kpi-label">Write rate</div><div class="kpi-value">18.5 <span class="kpi-unit">per sec</span></div><div class="kpi-note">54 ms each, mostly the resize</div></div></div>
+
+  <p>JPEG size depends entirely on content, so the thumbnail figure is a range
+  rather than a constant. The same 1280x960 frame stores as
+  <strong>2,087 bytes</strong> flat,
+  <strong>10,375</strong> photo-like, and
+  <strong>96,076</strong> as pure noise - a
+  spread of 46x. The middle figure is the one to plan with; the noise figure is
+  a worst case that no camera produces.</p>
+
+  <h3>Sync tiers</h3>
+  <p>Three tiers differ in one thing: whether the thumbnail rides along. That
+  one thing is essentially the whole payload.</p>
+
+  <div class="scroll"><table><caption>One batch per tier, each capture a distinct frame.</caption><thead><tr><th scope="col" class="a-left">tier</th><th scope="col" class="a-right">batch</th><th scope="col" class="a-left">images</th><th scope="col" class="a-right">JSON bytes</th><th scope="col" class="a-right">gzipped</th><th scope="col" class="a-right">ratio</th><th scope="col" class="a-right">bytes/capture</th></tr></thead><tbody><tr><th scope="row" class="a-left">low</th><td class="a-right">10</td><td class="a-left">no</td><td class="a-right">4,192</td><td class="a-right">570</td><td class="a-right">7.35x</td><td class="a-right">57</td></tr><tr><th scope="row" class="a-left">medium</th><td class="a-right">25</td><td class="a-left">yes</td><td class="a-right">357,412</td><td class="a-right">232,737</td><td class="a-right">1.54x</td><td class="a-right">9,309</td></tr><tr><th scope="row" class="a-left">high</th><td class="a-right">50</td><td class="a-left">yes</td><td class="a-right">718,535</td><td class="a-right">469,118</td><td class="a-right">1.53x</td><td class="a-right">9,382</td></tr></tbody></table></div>
+
+  <p>Metadata alone gzips 7.35x and lands at <strong>57 bytes per
+  capture</strong>. With a thumbnail it is <strong>9,310</strong> - a factor of
+  <strong>163</strong>, which is the "two
+  orders of magnitude" the module docstring claims, now measured. Base64 inflates
+  the JPEG by a third and gzip recovers almost exactly that much back, so a
+  transported thumbnail costs about what the file on disk costs; gzip cannot
+  compress an already-compressed image.</p>
+
+  <p>The <code>low</code> tier is therefore not a small saving. On a narrowband
+  link it is the difference between a day's captures fitting and not fitting.</p>
+
+  <details class="twin"><summary>Store read latency</summary><div class="scroll"><table><thead><tr><th scope="col" class="a-left">operation</th><th scope="col" class="a-right">median ms</th></tr></thead><tbody><tr><th scope="row" class="a-left">stats</th><td class="a-right">0.084</td></tr><tr><th scope="row" class="a-left">captures limit 50</th><td class="a-right">2.981</td></tr><tr><th scope="row" class="a-left">pending limit 50</th><td class="a-right">2.220</td></tr><tr><th scope="row" class="a-left">get one by uuid</th><td class="a-right">0.093</td></tr></tbody></table></div></details>
+</section>
+<section id="api">
+  <div class="eyebrow">Server <em>api</em></div>
+  <h2>Endpoint cost, and one correctness result</h2>
+  <p class="lede">Measured in-process, so these are the server's own cost with
+  no network underneath - the floor a deployment approaches, not what a device
+  on a radio link sees.</p>
+
+  <div class="scroll"><table><thead><tr><th scope="col" class="a-left">endpoint</th><th scope="col" class="a-right">median ms</th><th scope="col" class="a-left">note</th></tr></thead><tbody><tr><th scope="row" class="a-left">GET /v1/health</th><td class="a-right">7.4</td><td class="a-left">store counts and uptime</td></tr><tr><th scope="row" class="a-left">GET /v1/model</th><td class="a-right">106.9</td><td class="a-left">first call builds the model</td></tr><tr><th scope="row" class="a-left">GET /v1/captures?limit=50</th><td class="a-right">11.4</td><td class="a-left">50 rows with their detections</td></tr><tr><th scope="row" class="a-left">POST /v1/sync</th><td class="a-right">6.8</td><td class="a-left">25 captures, gzipped, metadata only</td></tr><tr><th scope="row" class="a-left">POST /v1/classify (1 image)</th><td class="a-right">396</td><td class="a-left">edge profile</td></tr><tr><th scope="row" class="a-left">POST /v1/classify (4 images)</th><td class="a-right">1535</td><td class="a-left">384 ms per image</td></tr></tbody></table></div>
+
+  <p>Everything that does not touch the model answers in single-digit
+  milliseconds. Classification is the model, and nothing else: four images cost
+  about four times one, so batching a request saves the HTTP round trip and not
+  the inference.</p>
+
+  <div class="callout">
+    <p><strong>Redelivery is idempotent, and it is now measured rather than
+    assumed.</strong> A batch of 25 captures delivered twice reported
+    <code>stored: 25, duplicates: 0</code> and then <code>stored: 0,
+    duplicates: 25</code>, with all 25 uuids acknowledged both times. That second
+    acknowledgement is the part that matters: a device can only clear its outbox
+    against one, so a redelivery that went unacknowledged would leave those rows
+    being sent forever.</p>
+  </div>
+</section>
+<section id="tests">
+  <div class="eyebrow">Test suite <em>pytest</em></div>
+  <h2>125 passing, 5 skipped</h2>
+  <p class="lede">The suite runs in about 40 seconds and needs no network and no
+  dataset.</p>
+
+  <div class="scroll"><table><thead><tr><th scope="col" class="a-left">module</th><th scope="col" class="a-right">passed</th><th scope="col" class="a-right">skipped</th><th scope="col" class="a-right">subtests</th><th scope="col" class="a-right">seconds</th></tr></thead><tbody><tr><th scope="row" class="a-left"><code>test_api.py</code></th><td class="a-right">18</td><td class="a-right">-</td><td class="a-right">-</td><td class="a-right">20.99</td></tr><tr><th scope="row" class="a-left"><code>test_backends.py</code></th><td class="a-right">13</td><td class="a-right">5</td><td class="a-right">-</td><td class="a-right">7.08</td></tr><tr><th scope="row" class="a-left"><code>test_network.py</code></th><td class="a-right">15</td><td class="a-right">-</td><td class="a-right">30</td><td class="a-right">15.08</td></tr><tr><th scope="row" class="a-left"><code>test_predict.py</code></th><td class="a-right">21</td><td class="a-right">-</td><td class="a-right">3</td><td class="a-right">7.92</td></tr><tr><th scope="row" class="a-left"><code>test_result.py</code></th><td class="a-right">10</td><td class="a-right">-</td><td class="a-right">-</td><td class="a-right">0.06</td></tr><tr><th scope="row" class="a-left"><code>test_store.py</code></th><td class="a-right">28</td><td class="a-right">-</td><td class="a-right">-</td><td class="a-right">2.68</td></tr><tr><th scope="row" class="a-left"><code>test_sync.py</code></th><td class="a-right">20</td><td class="a-right">-</td><td class="a-right">-</td><td class="a-right">2.34</td></tr></tbody></table></div>
+
+  <div class="kpis"><div class="kpi"><div class="kpi-label">Passing</div><div class="kpi-value">125</div><div class="kpi-note">plus 33 subtests</div></div><div class="kpi"><div class="kpi-label">Skipped</div><div class="kpi-value">5</div><div class="kpi-note">all of them TFLite</div></div><div class="kpi"><div class="kpi-label">Application code</div><div class="kpi-value">3,166 <span class="kpi-unit">lines</span></div><div class="kpi-note">across 15 modules</div></div><div class="kpi"><div class="kpi-label">Test code</div><div class="kpi-value">1,100 <span class="kpi-unit">lines</span></div><div class="kpi-note">0.35 lines per line of source</div></div></div>
+
+  <p>Every skip is the same cause: producing or running a <code>.tflite</code>
+  needs TensorFlow or LiteRT, and <code>ai-edge-torch</code> is Linux-only, so
+  that format cannot be built on this machine at all. Nothing is skipped for
+  being broken.</p>
+
+  <div class="defect">
+    <span class="tag tag-gap">coverage gap</span>
+    <h3>Nothing tests that an exported model computes the right thing</h3>
+    <p><code>test_backends.py</code> covers ONNX only through extension routing
+    and the classes sidecar. No test loads a real <code>.onnx</code>, runs a
+    batch through <code>OnnxBackend.run</code>, and compares the result to
+    torch's. The export path's correctness is currently unverified by the suite -
+    <code>bench.py --suite runtimes</code> is the only thing checking it, and a
+    benchmark is not a test.</p>
+  </div>
+</section>
+<section id="defects">
+  <div class="eyebrow">Found while measuring <em>export</em></div>
+  <h2>Two defects in the export path, both now fixed</h2>
+  <p class="lede">Both surfaced from running the tooling rather than reading
+  it, and both affected the edge story this document is about. The fixes are in
+  <code>model/export.py</code>; the measurements above were re-taken
+  afterwards.</p>
+
+  <div class="defect">
+    <span class="tag tag-fixed">fixed</span>
+    <h3>The ONNX artifact was two files, and the size report saw one</h3>
+    <p><code>export.py</code> printed <strong>0.1 MB</strong> for the ONNX
+    export. Torch 2.13 writes the weights to an external
+    <code>.onnx.data</code> sidecar of 44.7 MB and keeps only the graph -
+    97 KB - in the <code>.onnx</code> file, and the script measured just that
+    file. Copying the <code>.onnx</code> to a device shipped a model with no
+    weights in it, and nothing complained until inference.</p>
+    <p>Rather than only correcting the arithmetic, the export now folds the
+    sidecar back into the graph file and deletes it, so an export is one
+    portable file again. Sizes are computed by a new
+    <code>artifact_bytes()</code> that counts any sidecar it does find, so a
+    future exporter that reintroduces one cannot re-open the same hole. The
+    ONNX export now reports <strong>44.8 MB</strong>, one file, and still
+    agrees with torch to 1.9e-06.</p>
+  </div>
+
+  <div class="defect">
+    <span class="tag tag-fixed">fixed</span>
+    <h3>ONNX export crashed on a default Windows console</h3>
+    <p>Torch's exporter prints progress lines ending in a check-mark emoji.
+    On a console still defaulting to cp1252 that raised
+    <code>UnicodeEncodeError</code> part way through a working export, with a
+    traceback pointing into an encoder rather than at anything to do with the
+    model.</p>
+    <p><code>export.py</code> now switches its own streams to UTF-8 with a
+    replacing error handler before invoking the exporter, so a cosmetic
+    character cannot end the run. Verified by exporting under
+    <code>PYTHONIOENCODING=cp1252</code>, which previously failed and now
+    completes.</p>
+  </div>
+</section>
+<section id="caveats">
+  <div class="eyebrow">Limits <em>method</em></div>
+  <h2>What these numbers are not</h2>
+
+  <p><strong>No accuracy was re-measured.</strong> The
+  <code>images/</code> folder holds only <code>ATTRIBUTION.csv</code> on this
+  machine - the photographs are not on disk. Every accuracy figure quoted here
+  is read from the checkpoint, where <code>train.py</code> recorded it.</p>
+
+  <p>Re-collecting the dataset would not fix that. The manifest lists 633 images
+  across the six classes, while the run that produced this checkpoint used 351.
+  Downloading the manifest and splitting it with the same seed produces a
+  <em>different</em> split, which would place some of the original training
+  photographs into the test set and report an accuracy that is too high. A fresh
+  confusion matrix needs the exact 351 files, and they are not recoverable from
+  what is in the repository.</p>
+
+  <p><strong>Cost, unlike accuracy, does not depend on the pictures.</strong>
+  The same convolutions run over the same number of pixels whatever is in them,
+  which is why every timing here is measured on generated frames and is
+  unaffected by the dataset's absence. Sizes in bytes <em>do</em> depend on
+  content, so those were measured on photo-like frames and bracketed with a flat
+  and a noise case.</p>
+
+  <p><strong>One machine, one CPU.</strong> Every figure is from the AMD
+  six-thread CPU named at the top, with no GPU. They are a baseline and a set of
+  ratios, not a prediction for a phone or a single-board computer. The
+  <code>threads</code> suite is the closest thing here to an estimate for
+  smaller hardware, and it is a shape rather than a number.</p>
+
+  <p><strong>One reading was discarded.</strong> An early run recorded a 1080p
+  full-profile scan at 6,988 seconds - about 1.9 hours for work that takes 5.5.
+  The machine had suspended mid-run and <code>perf_counter</code> counted
+  through it. The harness now flags any sample more than 20x its fastest as a
+  suspected stall rather than reporting it; no figure on this page carries that
+  flag.</p>
+</section>
+<section id="repro">
+  <div class="eyebrow">Reproducing <em>bench.py</em></div>
+  <h2>Re-running any of this</h2>
+  <p>Every number on this page comes from <code>statistics/bench.py</code>, added for
+  this work, and the committed run it produced is
+  <code>statistics/bench_results.json</code>.</p>
+
+  <div class="scroll"><table><tbody>
+    <tr><th scope="row"><code>python statistics/bench.py</code></th>
+        <td class="a-left">every suite, printed as JSON</td></tr>
+    <tr><th scope="row"><code>python statistics/bench.py --suite backbones</code></th>
+        <td class="a-left">one suite; repeatable, and the flag stacks</td></tr>
+    <tr><th scope="row"><code>python statistics/bench.py --output bench_results.json</code></th>
+        <td class="a-left">write the results to a file</td></tr>
+    <tr><th scope="row"><code>python -m pytest test -q</code></th>
+        <td class="a-left">the test suite</td></tr>
+  </tbody></table></div>
+
+  <p>Two more scripts sit beside it and measure nothing themselves, so a
+  figure in this page and the same figure in a spreadsheet cannot disagree:
+  <code>statistics/report.py</code> rebuilds this page, and
+  <code>statistics/make_assets.py</code> writes every figure to
+  <code>statistics/graphs/</code> as standalone SVG and every table to
+  <code>statistics/tables/</code> as CSV, ready to drop into a document.</p>
+
+  <p>The suites are <code>environment</code>, <code>code</code>,
+  <code>checkpoint</code>,
+  <code>runtimes</code>, <code>threads</code>, <code>training</code>,
+  <code>windows</code>, <code>backbones</code>, <code>profiles</code>,
+  <code>store</code>, <code>sync</code> and <code>api</code>.
+  <code>environment</code> is always included, because it is what makes the rest
+  mean anything.</p>
+
+  <p>Two suites need optional packages. <code>runtimes</code> measures whatever
+  is already in <code>model/exported/</code>, so it reports only TorchScript
+  until <code>export.py</code> has been run for something else; ONNX figures here
+  needed <code>pip install onnx onnxscript onnxruntime</code>. Nothing needs the
+  <code>images/</code> folder.</p>
+</section>
+  <footer>
+    Generated from <code>statistics/bench_results.json</code>. Every figure is
+    measured on one machine; ratios travel further than absolutes.
+  </footer>
+</div>

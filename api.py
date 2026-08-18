@@ -1,25 +1,3 @@
-"""REST interface to the classifier and the capture store.
-
-    uvicorn api:app --host 0.0.0.0 --port 8000
-
-Two jobs, and they face opposite directions.
-
-`/v1/classify` is the one the web interface calls: hand it images, get
-back what the model found. It exists so the interface does not have to
-hold a copy of the model, which is what lets the same front end sit in
-front of a workstation or a device out in the field.
-
-`/v1/sync` is the far end of `sync.py`: devices that have been scanning
-offline push what they recorded up to whatever is running this. Nothing
-in that path re-runs the model - the detections were made on the device,
-and this only files them.
-
-Environment:
-    ZRA_MODEL         checkpoint or exported model to serve
-    ZRA_SCAN_PROFILE  full, balanced or edge
-    ZRA_STORE_ROOT    where this instance keeps its captures
-"""
-
 import base64
 import gzip
 import io

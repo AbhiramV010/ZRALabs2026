@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 740 330" role="img" aria-label="Scan latency by profile and frame size" class="chart"><title>Scan latency by profile and frame size</title><style>
+  svg { --surface:#fbfcfa; --ink-2:#4b5551; --ink-3:#7a847f;
+        --rule:#dde1da; --axis:#c2c9bf; --accent:#8a4b1f;
+        --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+        background:#fbfcfa; }
+  @media (prefers-color-scheme: dark) {
+    svg { --surface:#181c1a; --ink-2:#a9b3ae; --ink-3:#7f8a85;
+          --rule:#2a302d; --axis:#3a423e; --accent:#cf8a55;
+          --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+          background:#181c1a; }
+  }
+  text { font-family: ui-monospace, Consolas, "DejaVu Sans Mono", monospace; }
+  .tick { font-size:11.5px; fill:var(--ink-3); }
+  .axis-title { font-size:11.5px; fill:var(--ink-3); letter-spacing:0.06em; }
+  .bar-value { font-size:11.5px; fill:var(--ink-2); }
+  .row-label { font-size:12.5px; fill:var(--ink-2); }
+  .panel-head { font-size:11px; fill:var(--ink-3); letter-spacing:0.12em;
+                text-transform:uppercase; }
+  .note-in { font-size:11px; fill:var(--ink-3); }
+  .end-label { font-size:12px; fill:var(--ink-2); }
+  .muted-label { fill:var(--ink-3); }
+</style><line x1="60" y1="276.0" x2="720" y2="276.0" stroke="var(--rule)" stroke-width="1"/><text x="50.0" y="280.0" text-anchor="end" class="tick">0</text><line x1="60" y1="225.2" x2="720" y2="225.2" stroke="var(--rule)" stroke-width="1"/><text x="50.0" y="229.2" text-anchor="end" class="tick">1,000</text><line x1="60" y1="174.4" x2="720" y2="174.4" stroke="var(--rule)" stroke-width="1"/><text x="50.0" y="178.4" text-anchor="end" class="tick">2,000</text><line x1="60" y1="123.6" x2="720" y2="123.6" stroke="var(--rule)" stroke-width="1"/><text x="50.0" y="127.6" text-anchor="end" class="tick">3,000</text><line x1="60" y1="72.8" x2="720" y2="72.8" stroke="var(--rule)" stroke-width="1"/><text x="50.0" y="76.8" text-anchor="end" class="tick">4,000</text><line x1="60" y1="22.0" x2="720" y2="22.0" stroke="var(--rule)" stroke-width="1"/><text x="50.0" y="26.0" text-anchor="end" class="tick">5,000</text><text x="16" y="149.0" class="axis-title" text-anchor="middle" transform="rotate(-90 16 149.0)">milliseconds</text><rect x="92.0" y="41.4" width="44" height="234.6" rx="3" fill="var(--s1)"/><text x="114.0" y="33.4" class="bar-value" text-anchor="middle">69w</text><rect x="148.0" y="198.5" width="44" height="77.5" rx="3" fill="var(--s2)"/><text x="170.0" y="190.5" class="bar-value" text-anchor="middle">29w</text><rect x="204.0" y="259.7" width="44" height="16.3" rx="3" fill="var(--s3)"/><text x="226.0" y="251.7" class="bar-value" text-anchor="middle">6w</text><text x="170.0" y="302.0" text-anchor="middle" class="tick">VGA</text><rect x="312.0" y="87.9" width="44" height="188.1" rx="3" fill="var(--s1)"/><text x="334.0" y="79.9" class="bar-value" text-anchor="middle">69w</text><rect x="368.0" y="189.5" width="44" height="86.5" rx="3" fill="var(--s2)"/><text x="390.0" y="181.5" class="bar-value" text-anchor="middle">29w</text><rect x="424.0" y="258.7" width="44" height="17.3" rx="3" fill="var(--s3)"/><text x="446.0" y="250.7" class="bar-value" text-anchor="middle">6w</text><text x="390.0" y="302.0" text-anchor="middle" class="tick">phone</text><rect x="532.0" y="29.7" width="44" height="246.3" rx="3" fill="var(--s1)"/><text x="554.0" y="21.7" class="bar-value" text-anchor="middle">89w</text><rect x="588.0" y="150.9" width="44" height="125.1" rx="3" fill="var(--s2)"/><text x="610.0" y="142.9" class="bar-value" text-anchor="middle">43w</text><rect x="644.0" y="252.3" width="44" height="23.7" rx="3" fill="var(--s3)"/><text x="666.0" y="244.3" class="bar-value" text-anchor="middle">8w</text><text x="610.0" y="302.0" text-anchor="middle" class="tick">1080p</text><line x1="60" y1="276.0" x2="720" y2="276.0" stroke="var(--axis)" stroke-width="1"/></svg>

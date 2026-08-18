@@ -11,6 +11,17 @@ uvicorn>=0.27.0
 python-multipart>=0.0.9
 requests>=2.31.0
 
+# The tests add nothing to this list. They are written against the
+# standard library's unittest, so a clean checkout can already run them:
+#
+#   python -m unittest discover -s test -p "test_*.py"
+#
+# pytest reads the same files and prints a nicer summary, but nothing in
+# test/ imports it, so it is a convenience rather than a dependency.
+# test_api.py starts a real uvicorn server and drives it with requests -
+# both already above - rather than using FastAPI's TestClient, precisely
+# so that httpx does not have to be one either.
+
 # Edge export and inference, each optional - model/export.py and
 # model/backends.py skip the target whose package is missing, and say so.
 # Run 'python model/backends.py' to see what this machine has.
@@ -22,3 +33,18 @@ requests>=2.31.0
 # ai-edge-torch>=0.2.0  # export to .tflite (Linux only)
 # ai-edge-litert>=1.0.0 # running .tflite - LiteRT, the renamed TFLite
 # tflite-runtime>=2.14  # the older slim runtime, on a Pi or a Coral
+
+# statistics/ needs nothing of its own either. Two of the benchmark
+# suites measure less without an optional package, and each says which
+# one is missing rather than failing:
+#
+#   --suite runtimes   compares torch against whatever formats are
+#                      installed above, so it reports torch alone until
+#                      one of them is
+#   --suite api        is the only thing here that wants an HTTP client
+#                      library, since it drives the app through FastAPI's
+#                      TestClient. Recent starlette asks for httpx2 and
+#                      warns that plain httpx is deprecated, so prefer
+#                      httpx2 unless something else pins the older one
+#
+# httpx2>=0.28.0        # only for 'python statistics/bench.py --suite api'

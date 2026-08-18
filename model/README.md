@@ -274,9 +274,36 @@ model here is an order of magnitude past that at 224x224. For that class
 of board the honest options are capture-and-forward, or a separately
 trained binary presence check. The devices the notes name for offline
 work - phone, tablet, low end computer - are where these six become
-real. Measuring that gap is the whitepaper's job, and `bench.py` does
-not exist yet.
+real. Measuring that gap is the whitepaper's job, and `statistics/bench.py`
+now does it - see below.
 
+### What the six actually cost
+
+Measured by `statistics/bench.py` on a 6-thread AMD CPU, torch 2.13, batch of 32.
+The `x faster` column is against the resnet18 baseline:
+
+| architecture | parameters | x smaller | ms/image | x faster |
+| --- | ---: | ---: | ---: | ---: |
+| `resnet18` | 11,179,590 | 1.0 | 47.3 | 1.00 |
+| `mobilenet_v3_large` | 4,209,718 | 2.7 | 27.6 | 1.75 |
+| `efficientnet_b0` | 4,015,234 | 2.8 | 43.9 | 1.09 |
+| `mobilenet_v3_small` | 1,524,006 | 7.3 | 8.1 | 5.89 |
+| `squeezenet1_1` | 725,574 | 15.4 | 26.3 | 1.80 |
+| `shufflenet_v2_x0_5` | 347,942 | 32.1 | 7.0 | 6.73 |
+
+**The two orderings are not the same ordering.** `squeezenet1_1` has
+half the parameters of `mobilenet_v3_small` and takes three times as
+long per image; `efficientnet_b0` is a third the size of the ResNet and
+is not meaningfully faster than it. Parameters measure what a model
+weighs on disk, and these are convolutional nets where the cost is the
+feature maps rather than the weights - squeezenet holds full resolution
+far longer than the mobilenets do. Pick a backbone on the measured
+number, not the size.
+
+Latency is the mean of three runs. Absolute figures move 5-15% between
+runs on a machine doing anything else, so the ratio is the quantity
+worth quoting - `shufflenet` against `resnet18` held between 6.55x and
+6.89x across all three.
 ## Exporting for a device
 
 ```bash
@@ -304,6 +331,24 @@ convolution.
 Only TorchScript is exercised on the machine this was written on. ONNX
 and ExecuTorch need their packages installed; `ai-edge-torch` needs
 Linux, so a `.tflite` cannot be produced on Windows at all.
+
+Two things about the ONNX target are worth knowing, because both were
+bugs here and both are the kind that stay quiet until a device fails.
+
+Torch 2.9+ writes the weights to an external `<name>.onnx.data` and
+leaves the `.onnx` holding only the graph, a few dozen kB of it. An
+export like that is two files, and copying the `.onnx` on its own ships a
+model with no weights - inference is the first thing that notices.
+`export_onnx()` therefore folds the sidecar back into the graph file and
+deletes it, so an export is one portable file. `artifact_bytes()` counts
+any sidecar that does turn up, so the reported size is the size of what
+actually has to travel.
+
+The exporter also prints progress lines ending in an emoji, which raises
+`UnicodeEncodeError` on a Windows console still defaulting to cp1252 -
+part way through an export that was otherwise working.
+`allow_unicode_output()` switches the streams to UTF-8 before the export
+runs, so nothing has to be set in the environment first.
 
 `backends.py` then runs any of them behind one interface, so nothing
 upstream has to know which it got:
@@ -336,6 +381,57 @@ python model/predict.py photo.jpg --detect --profile edge
 any code knowing. The cap on how many detections come back is part of
 the profile rather than a constant - it was three, which is fewer than
 some frames genuinely contain, and is now eight on `full`.
+
+## Measuring what it costs
+
+```bash
+python statistics/bench.py                       # every suite
+python statistics/bench.py --suite backbones     # just one, repeatable
+python statistics/bench.py --output bench.json
+```
+
+Accuracy is written into the checkpoint by `train.py`. Cost was not
+written down anywhere, and cost is what decides whether this runs on the
+device the brief names. `statistics/bench.py` measures it and writes JSON -
+`statistics/bench_results.json` is a committed run, so the numbers quoted in
+this README and in the whitepaper can be checked against the machine
+they came from.
+
+| suite | what it answers |
+| --- | --- |
+| `environment` | which machine, which torch, which runtimes are installed |
+| `checkpoint` | file size, load time, cold start of `RailwayClassifier` |
+| `runtimes` | torch against each exported format, on speed *and* on agreement |
+| `threads` | latency against core count |
+| `training` | the per-epoch curves, reshaped into plottable series |
+| `windows` | how many crops a scan costs, by profile and frame shape |
+| `backbones` | size and speed of all six architectures |
+| `profiles` | end-to-end `detect()` cost per profile |
+| `store` | what a capture costs to write, and what it fills |
+| `sync` | what a batch weighs on the wire, per tier |
+| `api` | endpoint latency, and whether a redelivery double-stores |
+
+Nothing here needs `images/`. Accuracy is deliberately not measured: a
+fresh accuracy figure needs the exact photographs the original run was
+split from, and re-collecting the folder from `ATTRIBUTION.csv` gives a
+different and larger set, which would put training images into the test
+split. Cost, unlike accuracy, does not depend on the pictures.
+
+Three things worth knowing about the numbers:
+
+- **A scan costs its window count, not its resolution.** Every window is
+  resized to 224 before the model sees it, so a 12-megapixel drone still
+  and a VGA frame of the same shape cost the same. Measured at 52-67 ms
+  per window across every profile and resolution. The window grid keys
+  off the frame's *aspect ratio* - a 4:3 photograph is 69 windows on
+  `full` whether it is 640x480 or 4000x3000; 16:9 is 89.
+- **ONNX Runtime is about twice PyTorch's speed on the same weights**,
+  and the two agree to 1.9e-06 on the logits. `--suite runtimes` checks
+  the agreement, because a fast backend that is quietly wrong is worse
+  than no backend.
+- **Threads stop paying.** Going 1 to 6 threads on the ResNet is 3.6x,
+  not 6x - efficiency falls from 86% at two threads to 60% at six. A
+  four-core board gets about 2.6x out of its four cores.
 
 ## Checking a trained model
 

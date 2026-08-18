@@ -1,0 +1,10 @@
+frame,profile,windows,milliseconds,ms_per_window,scans_per_second
+VGA,balanced,29,1525.94,52.62,0.655
+VGA,edge,6,321.723,53.62,3.108
+VGA,full,69,4617.468,66.92,0.217
+phone,balanced,29,1701.884,58.69,0.588
+phone,edge,6,341.419,56.9,2.929
+phone,full,69,3701.993,53.65,0.27
+1080p,balanced,43,2462.569,57.27,0.406
+1080p,edge,8,466.14,58.27,2.145
+1080p,full,89,4847.552,54.47,0.206

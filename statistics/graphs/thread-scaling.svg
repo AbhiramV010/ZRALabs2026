@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 600 300" role="img" aria-label="Speedup against thread count, measured versus linear" class="chart"><title>Speedup against thread count</title><style>
+  svg { --surface:#fbfcfa; --ink-2:#4b5551; --ink-3:#7a847f;
+        --rule:#dde1da; --axis:#c2c9bf; --accent:#8a4b1f;
+        --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+        background:#fbfcfa; }
+  @media (prefers-color-scheme: dark) {
+    svg { --surface:#181c1a; --ink-2:#a9b3ae; --ink-3:#7f8a85;
+          --rule:#2a302d; --axis:#3a423e; --accent:#cf8a55;
+          --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+          background:#181c1a; }
+  }
+  text { font-family: ui-monospace, Consolas, "DejaVu Sans Mono", monospace; }
+  .tick { font-size:11.5px; fill:var(--ink-3); }
+  .axis-title { font-size:11.5px; fill:var(--ink-3); letter-spacing:0.06em; }
+  .bar-value { font-size:11.5px; fill:var(--ink-2); }
+  .row-label { font-size:12.5px; fill:var(--ink-2); }
+  .panel-head { font-size:11px; fill:var(--ink-3); letter-spacing:0.12em;
+                text-transform:uppercase; }
+  .note-in { font-size:11px; fill:var(--ink-3); }
+  .end-label { font-size:12px; fill:var(--ink-2); }
+  .muted-label { fill:var(--ink-3); }
+</style><line x1="46" y1="250.0" x2="484" y2="250.0" stroke="var(--rule)" stroke-width="1"/><text x="36.0" y="254.0" text-anchor="end" class="tick">1x</text><line x1="46" y1="203.6" x2="484" y2="203.6" stroke="var(--rule)" stroke-width="1"/><text x="36.0" y="207.6" text-anchor="end" class="tick">2x</text><line x1="46" y1="157.2" x2="484" y2="157.2" stroke="var(--rule)" stroke-width="1"/><text x="36.0" y="161.2" text-anchor="end" class="tick">3x</text><line x1="46" y1="110.8" x2="484" y2="110.8" stroke="var(--rule)" stroke-width="1"/><text x="36.0" y="114.8" text-anchor="end" class="tick">4x</text><line x1="46" y1="64.4" x2="484" y2="64.4" stroke="var(--rule)" stroke-width="1"/><text x="36.0" y="68.4" text-anchor="end" class="tick">5x</text><line x1="46" y1="18.0" x2="484" y2="18.0" stroke="var(--rule)" stroke-width="1"/><text x="36.0" y="22.0" text-anchor="end" class="tick">6x</text><text x="46.0" y="274.0" text-anchor="middle" class="tick">1</text><text x="133.6" y="274.0" text-anchor="middle" class="tick">2</text><text x="308.8" y="274.0" text-anchor="middle" class="tick">4</text><text x="484.0" y="274.0" text-anchor="middle" class="tick">6</text><text x="265.0" y="292.0" text-anchor="middle" class="axis-title">threads</text><path d="M46.00 250.00 L484.00 18.00" fill="none" stroke="var(--ink-3)" stroke-width="2" stroke-linecap="round"/><text x="494.0" y="22.0" class="end-label muted-label" text-anchor="start">linear</text><path d="M46.00 250.00 L133.60 216.59 L308.80 176.22 L484.00 130.75" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="46.0" cy="250.0" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/><circle cx="133.6" cy="216.6" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/><circle cx="308.8" cy="176.2" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/><circle cx="484.0" cy="130.8" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/><text x="494.0" y="134.8" class="end-label" text-anchor="start">measured 3.6x</text></svg>

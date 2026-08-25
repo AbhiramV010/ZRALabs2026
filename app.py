@@ -242,6 +242,8 @@ def detect_via_api(upload):
     wording for this screen, and there is no reason to put them on a
     wire that might be a radio link.
     """
+    assert API_URL is not None
+
     response = requests.post(
         f"{API_URL.rstrip('/')}/v1/classify",
         files={"files": (upload.name, upload.getvalue(), upload.type)},

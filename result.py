@@ -1,3 +1,10 @@
+from typing import Literal
+
+BadgeColor = Literal[
+    "red", "orange", "yellow", "blue", "green", "violet", "gray", "grey", "primary"
+]
+
+
 class DetectionResult:
     # box colors, matched to the palette in .streamlit/config.toml
     COLOR_MAP = {
@@ -10,7 +17,7 @@ class DetectionResult:
     }
 
     # the same classes as streamlit badge color names
-    BADGE_MAP = {
+    BADGE_MAP: dict[str, BadgeColor] = {
         "train": "red",
         "track": "blue",
         "signal": "yellow",
@@ -29,7 +36,7 @@ class DetectionResult:
     def get_color(self):
         return self.COLOR_MAP.get(self.label.lower(), "#94A3B8")
 
-    def get_badge_color(self):
+    def get_badge_color(self) -> BadgeColor:
         return self.BADGE_MAP.get(self.label.lower(), "gray")
 
     # the colors above are for this screen, these two are for everywhere

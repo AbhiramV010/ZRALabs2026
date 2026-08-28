@@ -1,8 +1,0 @@
-module,passed,skipped,subtests,seconds
-test_api.py,18,0,0,20.99
-test_backends.py,13,5,0,7.08
-test_network.py,15,0,30,15.08
-test_predict.py,21,0,3,7.92
-test_result.py,10,0,0,0.06
-test_store.py,28,0,0,2.68
-test_sync.py,20,0,0,2.34

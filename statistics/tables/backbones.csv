@@ -1,7 +1,0 @@
-architecture,parameters,smaller_than_resnet18,ms_per_image_batch32,faster_than_resnet18,spread_cv_percent,float32_mb,torchscript_mb,trainable_head_only,trainable_finetune
-resnet18,11179590,1.0,47.28,1.0,6.1,42.65,42.81,3078,8396806
-mobilenet_v3_large,4209718,2.66,27.6,1.75,15.3,16.06,16.58,1237766,2190646
-efficientnet_b0,4015234,2.78,43.92,1.09,13.1,15.32,16.02,7686,1137078
-mobilenet_v3_small,1524006,7.34,8.1,5.89,11.5,5.81,6.22,596998,947542
-squeezenet1_1,725574,15.41,26.33,1.8,8.5,2.77,2.88,3078,500278
-shufflenet_v2_x0_5,347942,32.13,7.02,6.73,5.3,1.33,1.75,6150,294758

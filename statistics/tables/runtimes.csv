@@ -1,3 +1,0 @@
-runtime,file,graph_bytes,sidecar_bytes,total_bytes,max_abs_logit_difference,agrees_with_torch,speedup_vs_torch
-torch,railway_classifier.pt,44799371,0,44799371,0.0,True,1.0
-onnx,railway_classifier_resnet18.onnx,44792027,0,44792027,1.9073486328125e-06,True,2.27

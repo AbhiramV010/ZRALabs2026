@@ -1,0 +1,1 @@
+One photo. Six railway assets. ZRA Railway Detection marks each one it finds and scores how sure it is: 70.7% top-1 accuracy, 615 ms per full scan on a laptop.
